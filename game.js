@@ -18,6 +18,7 @@
 	var floor_image = new Image();
 	var wall_image = new Image();
     var inventory = [];
+	var inventory_pointer;
     var enemies = [];
     var stairs = {
 	    x:14,
@@ -52,8 +53,8 @@
 			id: 0,
 			effect: "Restores 25 points of health"
 		};
-		inventory.push(s);
-		inventory.push(s);
+		inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);
+		inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);
 		assignImages();
 		context.fillStyle = "#339933";
 		context.font = "bolder small-caps 45px Arial";
@@ -99,13 +100,16 @@
 			context.clearRect(0,0,width,height);
 			context.strokeStyle = "#669999";
 			context.lineWidth = 10;
-			//player inventory
 			context.strokeRect(10,10,(width/2)-20,height-20);
+			context.strokeRect((width/2)+10,(height/2)+10,(width/2)-20,(height/2)-20);
+			//player inventory
+			context.lineWidth = 6;
+			context.strokeRect(20,25 + 55 * inventory_pointer,(width/2)-40,40);
 			for (i = 0; i < inventory.length; i += 1){
 				context.fillStyle =  "#669999";
-				context.font = "bolder 45px Arial";
+				context.font = "bolder 40px Arial";
 				context.textAlign = "left";
-				context.fillText(inventory[i].name,20,50 + 45*i)
+				context.fillText(inventory[i].name,30,60 + 55*i)
 			}
 			//player info
 			context.strokeRect((width/2)+10,(height/2)+10,(width/2)-20,(height/2)-20);
@@ -162,22 +166,37 @@
 		else if (key_code === 80){
 			game_level = level + 0;
 			level = -2;
+			inventory_pointer = 0;
 		}
 		grid[player.y][player.x] = 100;
     }
     
     function menuControls(event){
 	key_code = event.keyCode;
-	if (key_code === 80){
-	    level = game_level + 0;
-	}
-	else if (key_code === 13){
-	    if (level === 0){
-		//chacge it to pressing enter to play rather than clicking
-		level = 1;
-		main(0);
-	    }
-	}
+		if (key_code === 80){
+			level = game_level + 0;
+		}
+		else if (key_code === 13){
+			if (level === 0){
+			//chacge it to pressing enter to play rather than clicking
+			level = 1;
+			main(0);
+			}
+		}
+		else if (key_code === 87){
+			if (level === -2){
+				if (inventory_pointer > 0){
+					inventory_pointer -= 1;
+				}
+			}
+		}
+		else if (key_code === 83){
+			if (level === -2){
+				if (inventory_pointer < inventory.length - 1){
+					inventory_pointer += 1;
+				}
+			}
+		}
     }
     
     function checkCollision(x,y){
@@ -264,11 +283,11 @@
     }
 	
 	function assignImages(){
-		player_image.src = "player.png";
-		stairs_image.src = "door.png";
-		rat_image.src = "rat.png";
-		floor_image.src = "floor.png";
-		wall_image.src = "wall.png";
+		player_image.src = "images/player.png";
+		stairs_image.src = "images/door.png";
+		rat_image.src = "images/rat.png";
+		floor_image.src = "images/floor.png";
+		wall_image.src = "images/wall.png";
 	}
   
     function getRandomNumber(min, max) {

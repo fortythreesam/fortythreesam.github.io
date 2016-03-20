@@ -9,7 +9,7 @@
     var player = {
 	    x:20,
 	    y:20,
-	    health: 30,
+	    health: 35,
 	    damage: 5
 		};
 	var player_image = new Image();

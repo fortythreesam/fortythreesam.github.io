@@ -5,9 +5,10 @@
 			y: 30,
 			speed: 0,
 			max_speed: 25,
-			acceleration: 0.5,
-			handling: 0.15,
-			direction: 0
+			acceleration: 0.3,
+			handling: 0.10,
+			moving_direction: 0,
+			facing_direction:0
 		};
 	var vehicle_image = new Image();
 	vehicle_image.src = "ship_image.png";
@@ -16,6 +17,7 @@
 	var clockwise = false;
 	var counterclockwise = false;
 	var reverse = false;
+	var gate
 
     document.addEventListener('DOMContentLoaded', init, false);
   
@@ -24,13 +26,16 @@
         context = canvas.getContext('2d');
         width = canvas.width;
         height = canvas.height;
-		window.setInterval(update,33);
+		window.setInterval(update,16);
 		window.addEventListener("keydown",controls);
 		window.addEventListener("keyup",controlsEnd);
     }
 	
 	function update(){
-		if (accelerating){
+		if (reverse){
+			vehicle.speed -= 1;
+		}
+		if (accelerating && reverse === false){
 			if (vehicle.speed >= vehicle.max_speed){
 				vehicle.speed = vehicle.max_speed;
 			}
@@ -46,44 +51,41 @@
 				vehicle.speed -= vehicle.acceleration;
 			}
 		}
-		if (clockwise){
-			if (vehicle.direction + vehicle.handling > (2*Math.PI)){
-				vehicle.direction = 0 + (vehicle.handling - ((2*Math.PI) - vehicle.direction));
-			}
-			else{
-				vehicle.direction += vehicle.handling;
-			}
-		}
 		if (counterclockwise){
-			if (vehicle.direction - vehicle.handling < 0){
-				vehicle.direction = (2*Math.PI) - (vehicle.handling - vehicle.direction);
+			if (vehicle.facing_direction + vehicle.handling > (2*Math.PI)){
+				vehicle.facing_direction = 0 + (vehicle.handling - ((2*Math.PI) - vehicle.facing_direction));
 			}
 			else{
-				vehicle.direction -= vehicle.handling;
+				vehicle.facing_direction += vehicle.handling;
 			}
 		}
-		if (reverse){
-			vehicle.speed = -5;
+		if (clockwise){
+			if (vehicle.facing_direction - vehicle.handling < 0){
+				vehicle.facing_direction = (2*Math.PI) - (vehicle.handling - vehicle.facing_direction);
+			}
+			else{
+				vehicle.facing_direction -= vehicle.handling;
+			}
 		}
-		vehicle.x += (Math.round(vehicle.speed * Math.cos(vehicle.direction)));
-		vehicle.y += -1 * (Math.round(vehicle.speed * Math.sin(vehicle.direction)));		
+		vehicle.x += (Math.round(vehicle.speed * Math.cos(vehicle.facing_direction)));
+		vehicle.y += -1 * (Math.round(vehicle.speed * Math.sin(vehicle.facing_direction)));		
 		
-		image_index = Math.round((vehicle.direction * (180/Math.PI))/15);
-		if (image_index === 24){
+		image_index = Math.round((vehicle.facing_direction * (180/Math.PI))/2);
+		if (image_index === 180){
 			image_index = 0;
 		}		
 		
-		if (vehicle.x > width + 43){
-			vehicle.x = -42
+		if (vehicle.x > width + 32){
+			vehicle.x = -31
 		}
-		else if(vehicle.x < -43){
-			vehicle.x = width + 42
+		else if(vehicle.x < -32){
+			vehicle.x = width + 31
 		}
-		if (vehicle.y > height + 43){
-			vehicle.y = -42
+		if (vehicle.y > height + 32){
+			vehicle.y = -31
 		}
-		else if(vehicle.y < -43){
-			vehicle.y = height + 42
+		else if(vehicle.y < -32){
+			vehicle.y = height + 31
 		}
 		
 		draw();
@@ -91,8 +93,6 @@
 	
 	function draw() {
 		context.clearRect(0,0,width,height);
-		console.log(image_index);
-		console.log(vehicle.direction);
 		context.drawImage(vehicle_image,0 + 64*image_index,0,64,64,vehicle.x-32,vehicle.y-32,64,64);
 		/*context.fillStyle = "#448844";
 		context.fillRect(vehicle.x - 25,vehicle.y - 15, 50, 30);*/

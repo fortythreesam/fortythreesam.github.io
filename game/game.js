@@ -9,6 +9,7 @@
     var player = {
 	    x:20,
 	    y:20,
+		max_health: 35,
 	    health: 35,
 	    damage: 5
 		};
@@ -59,7 +60,7 @@
 		context.fillStyle = "#339933";
 		context.font = "bolder small-caps 45px Arial";
 		context.textAlign = "center";
-		context.fillText("[Press Enter To Start]",width/2,height/2)
+		context.fillText("[Press E To Start]",width/2,height/2)
 		grid[player.y][player.x] = 100;
 		//canvas.addEventListener("click", clicked, false);
 		window.addEventListener("keydown",main,false);
@@ -158,7 +159,7 @@
 				checkCollision(player.x+1,player.y );
 			}
 		}
-		else if (key_code === 13){
+		else if (key_code === 69){
 			if (player.x === stairs.x && player.y === stairs.y && enemies.length === 0){
 				generateLevel()
 			}
@@ -172,15 +173,19 @@
     }
     
     function menuControls(event){
-	key_code = event.keyCode;
+		key_code = event.keyCode;
 		if (key_code === 80){
 			level = game_level + 0;
 		}
-		else if (key_code === 13){
+		else if (key_code === 69){
 			if (level === 0){
-			//chacge it to pressing enter to play rather than clicking
-			level = 1;
-			main(0);
+				level = 1;
+				main(0);
+			}
+			else if (level === -2){
+				if (inventory[inventory_pointer].type === "potion"){
+					potion(inventory[inventory_pointer].id);
+				}
 			}
 		}
 		else if (key_code === 87){
@@ -215,7 +220,7 @@
 		for (var i = 0; i < grid_y; i += 1){
 			grid.push([]);
 			for(var j = 0; j < grid_x; j += 1){
-				if (Math.sqrt(Math.pow((i-(grid_x/2)),2)+Math.pow((j-(grid_x)/2),2)) >= ((grid_x/2) - getRandomNumber(1,2))){
+				if (Math.sqrt(Math.pow((i-(grid_x/2)),2)+Math.pow((j-(grid_y)/2),2)) >= ((grid_x/2) - getRandomNumber(1,2))){
 					grid[i].push(1);
 				}
 				else{
@@ -281,6 +286,16 @@
 	    }
 	}
     }
+	
+	function potion(id){
+		if (id === 0){
+			player.health += 25;
+			if (player.health > player.max_health){
+				player.health = player.max_health;
+			}
+			inventory.splice(inventory_pointer,1);
+		} 
+	}
 	
 	function assignImages(){
 		player_image.src = "images/player.png";

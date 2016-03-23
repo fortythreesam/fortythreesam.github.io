@@ -1,5 +1,5 @@
 (function (){
-  
+	console.log(Math.ceil(35.0));
     var grid = [];
     var width;
     var height;
@@ -35,7 +35,7 @@
         context = canvas.getContext('2d');
         width = canvas.width;
         height = canvas.height;
-        grid_x = Math.round(width/tile_size);
+        grid_x = Math.round(height/tile_size);
         grid_y = Math.round(height/tile_size);
         for (var i = 0; i < grid_y; i += 1){
 			grid.push([])
@@ -48,56 +48,59 @@
 				}
 			}
         }
-		var s = {
-			name: "Health Potion",
-			type: "potion",
-			id: 0,
-			effect: "Restores 25 points of health"
-		};
-		inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);
-		inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);inventory.push(s);
+		potion("give");potion("give");potion("give");potion("give");potion("give");
 		assignImages();
-		context.fillStyle = "#339933";
-		context.font = "bolder small-caps 45px Arial";
-		context.textAlign = "center";
-		context.fillText("[Press E To Start]",width/2,height/2)
 		grid[player.y][player.x] = 100;
-		//canvas.addEventListener("click", clicked, false);
+		draw();
 		window.addEventListener("keydown",main,false);
-		drawing = window.setInterval(draw,33);
     }
   
     function main(event){
 		if (level > 0) {
 			controls(event);
 			checkEnemies();
+			checkPlayer();
 			moveEnemies();
 			grid[player.y][player.x] = -1;
+			player.health += 0.25;
+		}
+		else if(level === -3){
+			console.log("");
 		}
 		else{
 			menuControls(event);
 		}
+		draw()
 	}
     
     function draw(){
-	if (level > 0){
-	    for (var i = 0; i < grid_y; i += 1){
-			for (var j = 0; j < grid_x; j += 1){
-				//floor shows up by default
-				context.drawImage(floor_image,j*tile_size,i*tile_size);
-				if (grid[i][j] === 1){
-					//walls
-					context.drawImage(wall_image,j*tile_size,i*tile_size);
-				}			
+		if (level > 0){
+			//actual game
+			for (var i = 0; i < grid_y; i += 1){
+				for (var j = 0; j < grid_x; j += 1){
+					//floor shows up by default
+					context.drawImage(floor_image,j*tile_size,i*tile_size);
+					if (grid[i][j] === 1){
+						//walls
+						context.drawImage(wall_image,j*tile_size,i*tile_size);
+					}			
+				}
 			}
-		}
-		context.drawImage(stairs_image,stairs.x*tile_size,stairs.y*tile_size);
-		for (i = 0; i < enemies.length; i += 1){
-			context.drawImage(rat_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
-		}
-		context.drawImage(player_image,player.x*tile_size,player.y*tile_size);
+			context.drawImage(stairs_image,stairs.x*tile_size,stairs.y*tile_size);
+			for (i = 0; i < enemies.length; i += 1){
+				context.drawImage(rat_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
+			}
+			context.drawImage(player_image,player.x*tile_size,player.y*tile_size);
         }
-        else if (level == -2){
+		else if (level === 0){
+			//main menu
+			context.fillStyle = "#339933";
+			context.font = "bolder small-caps 45px Arial";
+			context.textAlign = "center";
+			context.fillText("[Press E To Start]",width/2,height/2);
+		}
+        else if (level === -2){
+			//inventory screen
 			context.clearRect(0,0,width,height);
 			context.strokeStyle = "#669999";
 			context.lineWidth = 10;
@@ -115,8 +118,16 @@
 			//player info
 			context.strokeRect((width/2)+10,(height/2)+10,(width/2)-20,(height/2)-20);
 			context.fillText("Player Name",(width/2)+20,(height/2)+60);
-			context.fillText("Health:"+player.health,(width/2)+20,(height/2)+105);
+			context.fillText("Health:"+Math.ceil(player.health),(width/2)+20,(height/2)+105);
 			context.fillText("Floor:"+game_level,(width/2)+20,(height/2)+150);
+		}
+		else if (level === - 3){
+			context.clearRect(0,0,width,height);
+			context.fillStyle = "#339933";
+			context.font = "bolder small-caps 45px Arial";
+			context.textAlign = "center";
+			context.fillText("You got to level:"+game_level,width/2,height/2);
+			context.fillText("Refresh to play again",width/2,height/2+45);
 		}
     }
   
@@ -164,7 +175,7 @@
 				generateLevel()
 			}
 		}
-		else if (key_code === 80){
+		else if (key_code === 73){
 			game_level = level + 0;
 			level = -2;
 			inventory_pointer = 0;
@@ -174,7 +185,7 @@
     
     function menuControls(event){
 		key_code = event.keyCode;
-		if (key_code === 80){
+		if (key_code === 73 || key_code === 27){
 			level = game_level + 0;
 		}
 		else if (key_code === 69){
@@ -184,7 +195,7 @@
 			}
 			else if (level === -2){
 				if (inventory[inventory_pointer].type === "potion"){
-					potion(inventory[inventory_pointer].id);
+					potion("use");
 				}
 			}
 		}
@@ -229,6 +240,7 @@
 			}
 		}
 		level += 1;
+		grid[player.y][player.x] = 100;
 		generateEnemy(3);
 		main(0);
 		stairs.x = getRandomNumber(6, grid_x - 6);
@@ -287,11 +299,31 @@
 	}
     }
 	
-	function potion(id){
-		if (id === 0){
+	function checkPlayer(){
+		player.health += 0.25;
+		if (player.health > player.max_health){
+			player.health = player.max_health + 0;
+		}
+		else if (player.health <= 0){
+			game_level = level + 0;
+			level = -3;
+		}
+	}
+	
+	function potion(fcn){
+		if (fcn === "give"){ 
+			p = {
+				name: "Health Potion",
+				type: "potion",
+				id: 0,
+				effect: "Restores 25 points of health"
+			};
+			inventory.push(p);
+		}
+		else if(fcn === "use"){
 			player.health += 25;
 			if (player.health > player.max_health){
-				player.health = player.max_health;
+				player.health = player.max_health + 0;
 			}
 			inventory.splice(inventory_pointer,1);
 		} 

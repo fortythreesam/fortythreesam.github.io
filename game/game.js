@@ -25,8 +25,8 @@
 	    x:14,
 	    y:14
 	};    
-    var level = 0;
-    var game_level = 0;
+    var game_state = 0;
+    var level = 1;
 
     document.addEventListener('DOMContentLoaded', init, false);
   
@@ -56,15 +56,14 @@
     }
   
     function main(event){
-		if (level > 0) {
+		if (game_state === 1) {
 			controls(event);
 			checkEnemies();
 			checkPlayer();
 			moveEnemies();
 			grid[player.y][player.x] = -1;
-			player.health += 0.25;
 		}
-		else if(level === -3){
+		else if(game_state === -3){
 			console.log("");
 		}
 		else{
@@ -74,7 +73,7 @@
 	}
     
     function draw(){
-		if (level > 0){
+		if (game_state === 1){
 			//actual game
 			for (var i = 0; i < grid_y; i += 1){
 				for (var j = 0; j < grid_x; j += 1){
@@ -91,24 +90,25 @@
 				context.drawImage(rat_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
 			}
 			context.drawImage(player_image,player.x*tile_size,player.y*tile_size);
+			//player info
+			playerInfo(level);
         }
-		else if (level === 0){
+		else if (game_state === 0){
 			//main menu
 			context.fillStyle = "#339933";
 			context.font = "bolder small-caps 45px Arial";
 			context.textAlign = "center";
 			context.fillText("[Press E To Start]",width/2,height/2);
 		}
-        else if (level === -2){
+        else if (game_state === -2){
 			//inventory screen
 			context.clearRect(0,0,width,height);
 			context.strokeStyle = "#669999";
-			context.lineWidth = 10;
-			context.strokeRect(10,10,(width/2)-20,height-20);
-			context.strokeRect((width/2)+10,(height/2)+10,(width/2)-20,(height/2)-20);
+			context.lineWidth = 8;
+			context.strokeRect(10,10,(width/3)-20,height-20);
 			//player inventory
 			context.lineWidth = 6;
-			context.strokeRect(20,25 + 55 * inventory_pointer,(width/2)-40,40);
+			context.strokeRect(20,25 + 55 * inventory_pointer,(width/3)-40,40);
 			for (i = 0; i < inventory.length; i += 1){
 				context.fillStyle =  "#669999";
 				context.font = "bolder 40px Arial";
@@ -116,17 +116,14 @@
 				context.fillText(inventory[i].name,30,60 + 55*i)
 			}
 			//player info
-			context.strokeRect((width/2)+10,(height/2)+10,(width/2)-20,(height/2)-20);
-			context.fillText("Player Name",(width/2)+20,(height/2)+60);
-			context.fillText("Health:"+Math.ceil(player.health),(width/2)+20,(height/2)+105);
-			context.fillText("Floor:"+game_level,(width/2)+20,(height/2)+150);
+			playerInfo(level);
 		}
-		else if (level === - 3){
+		else if (game_state === - 3){
 			context.clearRect(0,0,width,height);
 			context.fillStyle = "#339933";
 			context.font = "bolder small-caps 45px Arial";
 			context.textAlign = "center";
-			context.fillText("You got to level:"+game_level,width/2,height/2);
+			context.fillText("You got to level:"+level,width/2,height/2);
 			context.fillText("Refresh to play again",width/2,height/2+45);
 		}
     }
@@ -176,8 +173,7 @@
 			}
 		}
 		else if (key_code === 73){
-			game_level = level + 0;
-			level = -2;
+			game_state = -2;
 			inventory_pointer = 0;
 		}
 		grid[player.y][player.x] = 100;
@@ -186,28 +182,28 @@
     function menuControls(event){
 		key_code = event.keyCode;
 		if (key_code === 73 || key_code === 27){
-			level = game_level + 0;
+			game_state = 1;
 		}
 		else if (key_code === 69){
-			if (level === 0){
-				level = 1;
+			if (game_state === 0){
+				game_state = 1;
 				main(0);
 			}
-			else if (level === -2){
+			else if (game_state === -2){
 				if (inventory[inventory_pointer].type === "potion"){
 					potion("use");
 				}
 			}
 		}
 		else if (key_code === 87){
-			if (level === -2){
+			if (game_state === -2){
 				if (inventory_pointer > 0){
 					inventory_pointer -= 1;
 				}
 			}
 		}
 		else if (key_code === 83){
-			if (level === -2){
+			if (game_state === -2){
 				if (inventory_pointer < inventory.length - 1){
 					inventory_pointer += 1;
 				}
@@ -250,8 +246,8 @@
     function generateEnemy(n){
 		for (i = 0; i < n; i += 1){
 			if (level > 1 && level <10){
-			enemy_x = getRandomNumber(5,grid_x-5);
-			enemy_y = getRandomNumber(5,grid_y-5);
+			enemy_x = getRandomNumber(6,grid_x-6);
+			enemy_y = getRandomNumber(6,grid_y-6);
 			if (grid[enemy_y][enemy_x] === 0){
 				enemy = {
 				x: enemy_x,
@@ -300,14 +296,27 @@
     }
 	
 	function checkPlayer(){
-		player.health += 0.25;
+		player.health += 0.25
 		if (player.health > player.max_health){
-			player.health = player.max_health + 0;
+			player.health = player.max_health+0;
 		}
 		else if (player.health <= 0){
-			game_level = level + 0;
-			level = -3;
+			game_state = -3;
 		}
+	}
+	
+	function playerInfo(lvl){
+		context.clearRect(height,0,250,height);
+		context.strokeStyle = "#669999";
+		context.lineWidth = 8;
+		context.strokeRect((height)+10,10,230,(height/2)-20);
+		context.font = "bolder 35px Arial";
+		context.textAlign = "left";
+		context.fillStyle =  "#669999";
+		context.fillText("Player Name",(height)+20,50);
+		console.log(player.health);
+		context.fillText("Health:"+Math.ceil(player.health),(height)+20,90);
+		context.fillText("Floor:"+lvl,(height)+20,130);
 	}
 	
 	function potion(fcn){

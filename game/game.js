@@ -11,7 +11,10 @@
 	    y:20,
 		max_health: 35,
 	    health: 35,
-	    damage: 5
+	    damage: 5,
+		level: 1,
+		exp: 0,
+		exp_to_next_level:10
 		};
 	var player_image = new Image();
 	var stairs_image = new Image();
@@ -176,6 +179,15 @@
 			game_state = -2;
 			inventory_pointer = 0;
 		}
+		else if (key_code === 81){
+			if (enemies.length === 0){
+				player.x = stairs.x + 0;
+				player.y = stairs.y + 0;
+			}
+		}
+		else{
+			console.log(key_code);
+		}
 		grid[player.y][player.x] = 100;
     }
     
@@ -254,6 +266,7 @@
 				y: enemy_y,
 				health: 10,
 				damage:5,
+				exp:4,
 				id:20
 				};
 				grid[enemy_y][enemy_x] = 20;
@@ -289,8 +302,9 @@
     function checkEnemies(){
 	for (i = 0; i < enemies.length;i += 1){
 	    if (enemies[i].health <= 0){
-		grid[enemies[i].y][enemies[i].x] = 0;
-		enemies.splice(i,1);
+			player.exp += enemies[i].exp;
+			grid[enemies[i].y][enemies[i].x] = 0;
+			enemies.splice(i,1);
 	    }
 	}
     }
@@ -303,6 +317,14 @@
 		else if (player.health <= 0){
 			game_state = -3;
 		}
+		
+		if (player.exp >= player.exp_to_next_level){
+			player.damage += 3*player.level;
+			player.max_health += 5*player.level;
+			player.level += 1;
+			player.health = player.max_health;
+			player.exp_to_next_level += 5 + 5*player.level;
+		}
 	}
 	
 	function playerInfo(lvl){
@@ -314,9 +336,10 @@
 		context.textAlign = "left";
 		context.fillStyle =  "#669999";
 		context.fillText("Player Name",(height)+20,50);
-		console.log(player.health);
 		context.fillText("Health:"+Math.ceil(player.health),(height)+20,90);
 		context.fillText("Floor:"+lvl,(height)+20,130);
+		context.fillText("Level:"+player.level,(height)+20,170);
+		context.fillText("Exp:"+player.exp+"/"+player.exp_to_next_level,(height)+20,210);		
 	}
 	
 	function potion(fcn){

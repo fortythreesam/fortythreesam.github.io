@@ -7,14 +7,17 @@
     var grid_y;
 	var tile_size = 32;
     var player = {
-	    x:20,
-	    y:20,
-		max_health: 35,
-	    health: 35,
-	    damage: 5,
-		level: 1,
-		exp: 0,
-		exp_to_next_level:10
+			x:20,
+			y:20,
+			max_health: 35,
+			health: 35,
+			damage: 5,
+			defense:0,
+			level: 1,
+			exp: 0,
+			exp_to_next_level:10,
+			//["head","body","legs","arms","feet",]
+			armour:["","","","",""]
 		};
 	var player_image = new Image();
 	var stairs_image = new Image();
@@ -25,11 +28,14 @@
 	var inventory_pointer;
     var enemies = [];
     var stairs = {
-	    x:14,
-	    y:14
+	    x:13,
+	    y:13
 	};    
     var game_state = 0;
-    var level = 1;
+    var level = 0;
+	var equipment_order = ["Head:","Body:","Legs:","Arms:","Feet:"];
+	var vowels = ["a","e","i","o","u","y"];
+	var consonants = ["b","c","d","f","g","h","j","k","l","m","n","p","r","s","t","v","w","z"];
 
     document.addEventListener('DOMContentLoaded', init, false);
   
@@ -54,6 +60,8 @@
 		potion("give");potion("give");potion("give");potion("give");potion("give");
 		assignImages();
 		grid[player.y][player.x] = 100;
+		equipItem(generateItem(1));
+		equipItem(generateItem(2));
 		draw();
 		window.addEventListener("keydown",main,false);
     }
@@ -109,15 +117,27 @@
 			context.strokeStyle = "#669999";
 			context.lineWidth = 8;
 			context.strokeRect(10,10,(width/3)-20,height-20);
+			context.strokeRect((width/3) + 5,10,2*(width/3) - 265,(height/2)-20);
 			//player inventory
+			context.font = "bolder 40px Arial";
+			context.textAlign = "left";
 			context.lineWidth = 6;
-			context.strokeRect(20,25 + 55 * inventory_pointer,(width/3)-40,40);
+			context.strokeRect(15,15 + 55 * inventory_pointer,(width/3)-30,40);
 			for (i = 0; i < inventory.length; i += 1){
 				context.fillStyle =  "#669999";
 				context.font = "bolder 40px Arial";
 				context.textAlign = "left";
-				context.fillText(inventory[i].name,30,60 + 55*i)
+				context.fillText(inventory[i].name,20,50 + 55*i)
 			}
+			//player equipment
+			for (i = 0; i < player.armour.length;i += 1){
+				if (player.armour[i] === ""){
+					context.fillText(equipment_order[i],(width/3) + 15,50 + 55*i);
+				}
+				else{
+					context.fillText(equipment_order[i]+player.armour[i].name,(width/3) + 15,50 + 55*i);
+				}
+			}	
 			//player info
 			playerInfo(level);
 		}
@@ -224,14 +244,14 @@
     }
     
     function checkCollision(x,y){
-	if (grid[y][x] >= 20){
-	    for (i = 0;i < enemies.length; i += 1){
-		if (enemies[i].x === x && enemies[i].y === y){
-		    player.health -= enemies[i].damage;
-		    enemies[i].health -= player.damage;
+		if (grid[y][x] >= 20){
+			for (i = 0;i < enemies.length; i += 1){
+				if (enemies[i].x === x && enemies[i].y === y){
+					player.health -= enemies[i].damage-player.defense;
+					enemies[i].health -= player.damage;
+				}
+			}
 		}
-	    }
-	}
     }
   
 	function generateLevel(){
@@ -257,16 +277,16 @@
 	
     function generateEnemy(n){
 		for (i = 0; i < n; i += 1){
-			if (level > 1 && level <10){
+			if (level > 0 && level < 100){
 			enemy_x = getRandomNumber(6,grid_x-6);
 			enemy_y = getRandomNumber(6,grid_y-6);
 			if (grid[enemy_y][enemy_x] === 0){
 				enemy = {
 				x: enemy_x,
 				y: enemy_y,
-				health: 10,
-				damage:5,
-				exp:4,
+				health: 2 + 6*level,
+				damage:5 + 5*(level-1),
+				exp:1 + 4*level + ((level-1) * (level -1)),
 				id:20
 				};
 				grid[enemy_y][enemy_x] = 20;
@@ -323,23 +343,27 @@
 			player.max_health += 5*player.level;
 			player.level += 1;
 			player.health = player.max_health;
-			player.exp_to_next_level += 5 + 5*player.level;
+			player.exp_to_next_level += 5 + (player.exp_to_next_level/2);
 		}
 	}
 	
 	function playerInfo(lvl){
+		//outlines for info
 		context.clearRect(height,0,250,height);
 		context.strokeStyle = "#669999";
 		context.lineWidth = 8;
 		context.strokeRect((height)+10,10,230,(height/2)-20);
+		context.strokeRect((height)+10,(height/2)+10,230,(height/2)-20);
 		context.font = "bolder 35px Arial";
 		context.textAlign = "left";
 		context.fillStyle =  "#669999";
+		//name,health level etc
 		context.fillText("Player Name",(height)+20,50);
 		context.fillText("Health:"+Math.ceil(player.health),(height)+20,90);
-		context.fillText("Floor:"+lvl,(height)+20,130);
-		context.fillText("Level:"+player.level,(height)+20,170);
-		context.fillText("Exp:"+player.exp+"/"+player.exp_to_next_level,(height)+20,210);		
+		context.fillText("Armour:"+player.defense,(height)+20,130);
+		context.fillText("Floor:"+lvl,(height)+20,170);
+		context.fillText("Level:"+player.level,(height)+20,210);
+		context.fillText("Exp:"+player.exp+"/"+player.exp_to_next_level,(height)+20,250);	
 	}
 	
 	function potion(fcn){
@@ -361,6 +385,55 @@
 		} 
 	}
 	
+	function generateItem(slot){
+		if (slot === 0){
+			item = {
+				name:"Helmet",
+				slot: 0,
+				defense: 2,
+				description: "A sturdy piece of armour"
+			}
+		}
+		else if (slot === 1){
+			item = {
+				name:"Chestpiece",
+				slot: 1,
+				defense: 5,
+				description: "A sturdy piece of armour"
+			}
+		}
+		else if (slot === 2){
+			item ={
+				name:"Leggings",
+				slot: 2,
+				defense: 4,
+				description: "A sturdy piece of armour"
+			} 
+		}
+		else if (slot === 3){
+			item ={
+				name:"Boots",
+				slot: 3,
+				defense: 3,
+				description: "A sturdy piece of armour"
+			} 
+		}
+		else if (slot === 4){
+			item ={
+				name:"Gloves",
+				slot: 4,
+				defense: 3,
+				description: "A sturdy piece of armour"
+			} 
+		}
+		return item
+	}
+	
+	function equipItem(item){
+		player.armour[item.slot] = item;
+		player.defense += item.defense;
+	}
+	
 	function assignImages(){
 		player_image.src = "images/player.png";
 		stairs_image.src = "images/door.png";
@@ -370,7 +443,7 @@
 	}
   
     function getRandomNumber(min, max) {
-	return Math.round(Math.random() * (max - min)) + min;
+		return Math.round(Math.random() * (max - min)) + min;
     }
   
 

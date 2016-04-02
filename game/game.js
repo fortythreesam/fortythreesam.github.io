@@ -1,24 +1,31 @@
 (function (){
-	console.log(Math.ceil(35.0));
     var grid = [];
     var width;
     var height;
     var grid_x;
     var grid_y;
 	var tile_size = 32;
+	var nothing = {
+		name:"Nothing",
+		slot: -1,
+		defense: 0,
+		description: "No Armour Equipped in this slot",
+		price:0
+	};
     var player = {
-			x:20,
-			y:20,
-			max_health: 35,
-			health: 35,
-			damage: 5,
-			defense:0,
-			level: 1,
-			exp: 0,
-			exp_to_next_level:10,
-			//["head","body","legs","arms","feet",]
-			armour:["","","","",""]
-		};
+		x:20,
+		y:20,
+		max_health: 35,
+		health: 35,
+		damage: 5,
+		defense:0,
+		level: 1,
+		exp: 0,
+		exp_to_next_level:10,
+		//["head","body","legs","arms","feet",]
+		armour:[nothing,nothing,nothing,nothing,nothing],
+		gold:0
+	};
 	var player_image = new Image();
 	var stairs_image = new Image();
 	var rat_image = new Image();
@@ -26,6 +33,7 @@
 	var wall_image = new Image();
     var inventory = [];
 	var inventory_pointer;
+	var menu_pointer;
     var enemies = [];
     var stairs = {
 	    x:13,
@@ -75,7 +83,7 @@
 			grid[player.y][player.x] = -1;
 		}
 		else if(game_state === -3){
-			console.log("");
+			console.log("Game Over");
 		}
 		else{
 			menuControls(event);
@@ -121,12 +129,9 @@
 			//player inventory
 			context.font = "bolder 40px Arial";
 			context.textAlign = "left";
+			context.fillStyle =  "#669999";
 			context.lineWidth = 6;
-			context.strokeRect(15,15 + 55 * inventory_pointer,(width/3)-30,40);
 			for (i = 0; i < inventory.length; i += 1){
-				context.fillStyle =  "#669999";
-				context.font = "bolder 40px Arial";
-				context.textAlign = "left";
 				context.fillText(inventory[i].name,20,50 + 55*i)
 			}
 			//player equipment
@@ -137,7 +142,14 @@
 				else{
 					context.fillText(equipment_order[i]+player.armour[i].name,(width/3) + 15,50 + 55*i);
 				}
-			}	
+			}
+			//inventory pointer
+			if (menu_pointer === 0){
+				context.strokeRect(15,15 + 55 * inventory_pointer,(width/3)-30,47);
+			}
+			else{
+				context.strokeRect((width/3) + 10,15 + 55 * inventory_pointer,2*(width/3) - 275,47)
+			}
 			//player info
 			playerInfo(level);
 		}
@@ -191,15 +203,24 @@
 			}
 		}
 		else if (key_code === 69){
+			//e
 			if (player.x === stairs.x && player.y === stairs.y && enemies.length === 0){
 				generateLevel()
 			}
 		}
 		else if (key_code === 73){
+			//i
 			game_state = -2;
 			inventory_pointer = 0;
+			if (inventory.length > 0){
+				menu_pointer = 0;
+			}
+			else{
+				menu_pointer = 1;
+			}
 		}
 		else if (key_code === 81){
+			//q
 			if (enemies.length === 0){
 				player.x = stairs.x + 0;
 				player.y = stairs.y + 0;
@@ -214,30 +235,94 @@
     function menuControls(event){
 		key_code = event.keyCode;
 		if (key_code === 73 || key_code === 27){
+			//i || esc
 			game_state = 1;
 		}
 		else if (key_code === 69){
+			//e
 			if (game_state === 0){
 				game_state = 1;
 				main(0);
 			}
 			else if (game_state === -2){
-				if (inventory[inventory_pointer].type === "potion"){
-					potion("use");
+				if(menu_pointer === 0){
+					if (inventory[inventory_pointer].type === "potion"){
+						potion("use");
+					}
+					else if (inventory[inventory_pointer].type === "armour"){
+						equipItem(inventory[inventory_pointer]);
+						inventory.splice(inventory_pointer,1);
+					}
+					if (inventory.length === 0){
+						menu_pointer = 1
+					}
+					else if (inventory_pointer > inventory.length-1){
+						inventory_pointer -= 1 ;
+					}
 				}
 			}
 		}
 		else if (key_code === 87){
-			if (game_state === -2){
+			//w
+			if (game_state === -2){		
 				if (inventory_pointer > 0){
 					inventory_pointer -= 1;
 				}
 			}
 		}
 		else if (key_code === 83){
+			//s
 			if (game_state === -2){
-				if (inventory_pointer < inventory.length - 1){
-					inventory_pointer += 1;
+				if (menu_pointer === 0){
+					if (inventory_pointer < inventory.length - 1){
+						inventory_pointer += 1;
+					}
+				}
+				else{
+					if (inventory_pointer < 6){
+						inventory_pointer += 1;
+					}
+				}
+			}
+		}else if (key_code === 65){
+			if (game_state === -2){
+				if (menu_pointer != 0 && inventory.length > 0){
+					menu_pointer = 0;
+					if (inventory_pointer > inventory.length - 1){
+						inventory_pointer = inventory.length - 1;
+					} 
+				}
+			}
+		}
+		else if (key_code ===  68){
+			if (game_state === -2){
+				if (menu_pointer != 1){
+					menu_pointer = 1;
+					if (inventory_pointer > 6){
+						inventory_pointer = 6
+					}
+				}
+			}
+		}
+		else if (key_code === 82){
+			//r
+			if (game_state === -2){
+				if (menu_pointer === 0){
+					player.gold += inventory[inventory_pointer].price;
+					inventory.splice(inventory_pointer,1);
+					if (inventory.length === 0){
+						menu_pointer = 1;
+					}
+					else if (inventory_pointer > inventory.length-1){
+						inventory_pointer -= 1 ;
+					}
+				}
+				else{
+					if (player.armour[inventory_pointer].name !== "Nothing"){
+						inventory.push(player.armour[inventory_pointer]);
+						player.defense -= player.armour[inventory_pointer].defense;
+						equipItem(nothing);
+					}
 				}
 			}
 		}
@@ -276,7 +361,7 @@
 	}
 	
     function generateEnemy(n){
-		for (i = 0; i < n; i += 1){
+		while (enemies.length < n){
 			if (level > 0 && level < 100){
 			enemy_x = getRandomNumber(6,grid_x-6);
 			enemy_y = getRandomNumber(6,grid_y-6);
@@ -363,7 +448,8 @@
 		context.fillText("Armour:"+player.defense,(height)+20,130);
 		context.fillText("Floor:"+lvl,(height)+20,170);
 		context.fillText("Level:"+player.level,(height)+20,210);
-		context.fillText("Exp:"+player.exp+"/"+player.exp_to_next_level,(height)+20,250);	
+		context.fillText("Exp:"+player.exp+"/"+player.exp_to_next_level,(height)+20,250);
+		context.fillText("Gold:"+player.gold,(height)+20,290);
 	}
 	
 	function potion(fcn){
@@ -372,12 +458,13 @@
 				name: "Health Potion",
 				type: "potion",
 				id: 0,
-				effect: "Restores 25 points of health"
+				effect: "Restores 25% of your health",
+				price:50
 			};
 			inventory.push(p);
 		}
 		else if(fcn === "use"){
-			player.health += 25;
+			player.health += player.health/4;
 			if (player.health > player.max_health){
 				player.health = player.max_health + 0;
 			}
@@ -389,49 +476,68 @@
 		if (slot === 0){
 			item = {
 				name:"Helmet",
+				type:"armour",
 				slot: 0,
 				defense: 2,
-				description: "A sturdy piece of armour"
-			}
+				description: "A sturdy piece of armour",
+				price:30 + 15 * level
+			};
 		}
 		else if (slot === 1){
 			item = {
 				name:"Chestpiece",
+				type:"armour",
 				slot: 1,
 				defense: 5,
-				description: "A sturdy piece of armour"
+				description: "A sturdy piece of armour",
+				price:100 + 25 * level
 			}
 		}
 		else if (slot === 2){
 			item ={
 				name:"Leggings",
+				type:"armour",
 				slot: 2,
 				defense: 4,
-				description: "A sturdy piece of armour"
+				description: "A sturdy piece of armour",
+				price:70 + 22 * level
 			} 
 		}
 		else if (slot === 3){
 			item ={
 				name:"Boots",
+				type:"armour",
 				slot: 3,
 				defense: 3,
-				description: "A sturdy piece of armour"
+				description: "A sturdy piece of armour",
+				price:40 + 17 * 25
 			} 
 		}
 		else if (slot === 4){
 			item ={
 				name:"Gloves",
+				type:"armour",
 				slot: 4,
 				defense: 3,
-				description: "A sturdy piece of armour"
+				description: "A sturdy piece of armour",
+				price:50 + 20 * level
 			} 
 		}
-		return item
+		return item;
 	}
 	
 	function equipItem(item){
-		player.armour[item.slot] = item;
-		player.defense += item.defense;
+		if (item.name === "Nothing"){
+			item_slot = inventory_pointer;
+			player.armour[inventory_pointer] = item;
+		}
+		else{
+			if (player.armour[item.slot].name !== "Nothing"){
+				inventory.push(player.armour[item.slot]);
+			}
+			player.armour[item.slot] = item;
+			player.defense += item.defense;
+		}
 	}
 	
 	function assignImages(){

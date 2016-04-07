@@ -4,15 +4,15 @@
     var height;
     var grid_x;
     var grid_y;
-	var tile_size = 32;
-	var nothing = {
-		name:"Nothing",
-		slot: -1,
-		defense: 0,
-		damage: 0,
-		description: "No item equipped",
-		price:0
-	};
+    var tile_size = 32;
+    var nothing = {
+	    name:"Nothing",
+	    slot: -1,
+	    defense: 0,
+	    damage: 0,
+	    description: "No item equipped",
+	    price:0
+    };
     var player = {
 		x:20,
 		y:20,
@@ -27,16 +27,18 @@
 		equipment:[nothing,nothing,nothing,nothing,nothing,nothing,nothing],
 		gold:0
 	};
-	var player_image = new Image();
-	var stairs_image = new Image();
-	var rat_image = new Image();
-	var floor_image = new Image();
-	var wall_image = new Image();
+    var player_image = new Image();
+    var stairs_image = new Image();
+    var rat_image = new Image();
+	var rat_king_image = new Image();
+    var floor_image = new Image();
+    var wall_image = new Image();
+	var chest_image = new Image();
     var inventory = [];
-	var inventory_pointer;
-	var menu_pointer;
+    var inventory_pointer;
+    var menu_pointer;
     var enemies = [];
-	var num_dead = 0;
+    var num_dead = 0;
     var stairs = {
 	    x:13,
 	    y:13
@@ -112,11 +114,22 @@
 				}
 			}
 			context.drawImage(stairs_image,stairs.x*tile_size,stairs.y*tile_size);
-			context.fillStyle = "#996633";
-			context.fillRect(chest.x*tile_size,chest.y*tile_size,tile_size,tile_size);
+			context.drawImage(chest_image,chest.x*tile_size,chest.y*tile_size);
 			for (i = 0; i < enemies.length; i += 1){
 				if (enemies[i].alive){
-					context.drawImage(rat_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
+					if (enemies[i].id === 20){
+						context.drawImage(rat_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
+					}
+					else if(enemies[i].id === 30){
+						context.drawImage(rat_king_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
+					}
+					if (enemies[i].health < enemies[i].max_health){
+						var health_missing = Math.round(((enemies[i].max_health - enemies[i].health)/enemies[i].max_health)*32)
+						context.fillStyle = "#bb1111";
+						context.fillRect(enemies[i].x*tile_size,enemies[i].y*tile_size+28,tile_size,4);
+						context.fillStyle = "#11bb11";
+						context.fillRect(enemies[i].x*tile_size+health_missing,enemies[i].y*tile_size+28,tile_size-health_missing,4)
+					}
 				}
 			}
 			context.drawImage(player_image,player.x*tile_size,player.y*tile_size);
@@ -264,6 +277,7 @@
 					potion("use",i);
 					not_used = false;
 			    }
+				i += 1;
 			}
 		}
 		else{
@@ -403,7 +417,12 @@
 	    }
 	    level += 1;
 	    grid[player.y][player.x] = 100;
-	    generateEnemy(3);
+	    if (level%10 === 0 || level === 1){
+		generateEnemy(1,"boss");
+	    }
+	    else{
+		generateEnemy(3,"enemy");
+	    }
 	    main(0);
 	    stairs.x = getRandomNumber(6, grid_x - 6);
 	    stairs.y = getRandomNumber(6, grid_y - 6);
@@ -414,29 +433,65 @@
 	    } 
 	}
 	
-    function generateEnemy(n){
-		while (enemies.length < n){
-			if (level > 0 && level < 100){
+    function generateEnemy(n,type){
+		if (type === "enemy"){
+			while (enemies.length < n){
+				var enemy_type = getRandomNumber(1,Math.ceil(level/10));
 				enemy_x = getRandomNumber(6,grid_x-6);
 				enemy_y = getRandomNumber(6,grid_y-6);
 				if (grid[enemy_y][enemy_x] === 0){
-					enemy = {
-						x: enemy_x,
-						y: enemy_y,
-						can_move:true,
-						alive: true,
-						health: 2 + 6*level,
-						damage:10 + 5*(level-1),
-						exp:1 + 4*level + ((level-1) * (level -1)),
-						id:20
-					};
-					grid[enemy_y][enemy_x] = 20;
-					enemies.push(enemy);
+					if (enemy_type === 1){
+					    enemy = {
+						    x: enemy_x,
+						    y: enemy_y,
+						    can_move:true,
+						    alive: true,
+						    health: 2 + 6*level,
+						    max_health: 2 + 6*level,
+						    damage:10 + 5*(level-1),
+						    exp:1 + 4*level + ((level-1) * (level -1)),
+						    id:20
+					    };
+					}
+					else if (enemy_type === 2){
+					    enemy = {
+						    x: enemy_x,
+						    y: enemy_y,
+						    can_move:true,
+						    alive: true,
+						    health: 5 + 7*level,
+						    max_health: 5 + 7*level,
+						    damage:6 + 4*(level-1),
+						    exp:1 + 4*level + ((level-1) * (level -1)),
+						    id:21
+					    };
+					}
+					    grid[enemy_y][enemy_x] = enemy.id;
+					    enemies.push(enemy);
 				}
 			}
 		}
+		else if (type === "boss"){
+			enemy_x = getRandomNumber(6,grid_x-6);
+			enemy_y = getRandomNumber(6,grid_y-6);
+			if (grid[enemy_y][enemy_x] === 0){
+				enemy = {
+					x: enemy_x,
+					y: enemy_y,
+					can_move:true,
+					alive: true,
+					health: 200 + 25*level,
+					max_health: 200 + 25*level,
+					damage:10 + 5*(level-1),
+					exp:100 + 6*level + 2*((level-1) * (level -1)),
+					id:30
+				};
+				grid[enemy_y][enemy_x] = enemy.id;
+				enemies.push(enemy);
+			}
+		}
     }
-    
+        
     function moveEnemies(i){
 		grid[enemies[i].y][enemies[i].x] = 0
 		if (Math.abs(player.x - enemies[i].x) >= Math.abs(player.y - enemies[i].y)){
@@ -719,6 +774,8 @@
 	    rat_image.src = "images/rat.png";
 	    floor_image.src = "images/floor.png";
 	    wall_image.src = "images/wall.png";
+		chest_image.src = "images/chest.png";
+		rat_king_image.src = "images/rat_king.png";
     }
 
     function getRandomNumber(min, max) {

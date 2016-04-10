@@ -5,6 +5,7 @@
     var grid_x;
     var grid_y;
     var tile_size = 32;
+	var used_action = false;
     var nothing = {
 	    name:"Nothing",
 	    slot: -1,
@@ -13,11 +14,12 @@
 	    description: "No item equipped",
 	    price:0
     };
+	var player_name = "Player Name";
     var player = {
 		x:20,
 		y:20,
-		max_health: 35,
-		health: 35,
+		max_health: 50,
+		health: 50,
 		damage: 5,
 		defense:0,
 		level: 1,
@@ -31,13 +33,18 @@
     var stairs_image = new Image();
     var rat_image = new Image();
 	var rat_king_image = new Image();
+	var snake_image = new Image();
+	var snake_queen_image = new Image();
     var floor_image = new Image();
     var wall_image = new Image();
 	var chest_image = new Image();
     var inventory = [];
+	var not_in_inventory = true;
+    var inventory_page = 0;
     var inventory_pointer;
     var menu_pointer;
     var enemies = [];
+	var enemy_number;
     var num_dead = 0;
     var stairs = {
 	    x:13,
@@ -50,8 +57,6 @@
 	    x:13,
 	    y:11
     };
-    var vowels = ["a","e","i","o","u","y"];
-    var consonants = ["b","c","d","f","g","h","j","k","l","m","n","p","r","s","t","v","w","z"];
 
     document.addEventListener('DOMContentLoaded', init, false);
   
@@ -73,32 +78,39 @@
 				}
 			}
         }
-		potion("give");potion("give");potion("give");potion("give");potion("give");
-		assignImages();
-		grid[player.y][player.x] = 100;
-		equipItem(generateItem(1));
-		equipItem(generateItem(2));
-		equipItem(generateItem(6));
-		draw();
-		window.addEventListener("keydown",main,false);
+		
+	for (i = 0; i< 5; i += 1){
+		potion("give");
+	}
+	assignImages();
+	grid[player.y][player.x] = 100;
+	equipItem(generateItem(1));
+	equipItem(generateItem(2));
+	equipItem(generateItem(6));
+	draw();
+	window.addEventListener("keydown",main,false);
     }
   
     function main(event){
-		if (game_state === 1) {
-			combatEnemies();
-			controls(event);
-			checkEnemies();
+	if (game_state === 1) {
+		controls(event);
+		if (used_action){
+			if (not_in_inventory){
+				combatEnemies();
+				checkEnemies();
+			}
 			checkPlayer();
 			grid[player.y][player.x] = -1;
 		}
-		else if(game_state === -3){
-			console.log("Game Over");
-		}
-		else{
-			menuControls(event);
-		}
-		draw()
 	}
+	else if(game_state === -3){
+		console.log("Game Over");
+	}
+	else{
+		menuControls(event);
+	}
+	draw()
+    }
     
     function draw(){
 		if (game_state === 1){
@@ -117,12 +129,7 @@
 			context.drawImage(chest_image,chest.x*tile_size,chest.y*tile_size);
 			for (i = 0; i < enemies.length; i += 1){
 				if (enemies[i].alive){
-					if (enemies[i].id === 20){
-						context.drawImage(rat_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
-					}
-					else if(enemies[i].id === 30){
-						context.drawImage(rat_king_image,enemies[i].x*tile_size,enemies[i].y*tile_size);
-					}
+					context.drawImage(enemies[i].image,enemies[i].x*tile_size,enemies[i].y*tile_size);
 					if (enemies[i].health < enemies[i].max_health){
 						var health_missing = Math.round(((enemies[i].max_health - enemies[i].health)/enemies[i].max_health)*32)
 						context.fillStyle = "#bb1111";
@@ -131,9 +138,17 @@
 						context.fillRect(enemies[i].x*tile_size+health_missing,enemies[i].y*tile_size+28,tile_size-health_missing,4)
 					}
 				}
+				
 			}
+			//player
 			context.drawImage(player_image,player.x*tile_size,player.y*tile_size);
-			//player info
+			if (player.health < player.max_health){
+						var health_missing = Math.round(((player.max_health - player.health)/player.max_health)*32)
+						context.fillStyle = "#bb1111";
+						context.fillRect(player.x*tile_size,player.y*tile_size+28,tile_size,4);
+						context.fillStyle = "#11bb11";
+						context.fillRect(player.x*tile_size+health_missing,player.y*tile_size+28,tile_size-health_missing,4)
+					}
 			playerInfo();
 			}
 		else if (game_state === 0){
@@ -146,7 +161,7 @@
 			else if (game_state === -2){
 			//inventory screen
 			context.clearRect(0,0,width,height);
-			context.strokeStyle = "#669999";
+			context.strokeStyle = "#8a8a5c";
 			context.lineWidth = 8;
 			context.strokeRect(10,10,(width/3)-20,height-20);
 			context.strokeRect((width/3) + 5,10,2*(width/3) - 265,(height/2)-20);
@@ -154,10 +169,24 @@
 			//player inventory
 			context.font = "bolder 40px Arial";
 			context.textAlign = "left";
-			context.fillStyle =  "#669999";
+			context.fillStyle =  "#8a8a5c";
 			context.lineWidth = 6;
-			for (i = 0; i < inventory.length; i += 1){
-				context.fillText(inventory[i].name,20,50 + 55*i)
+			for (i = 0; i <Math.min(inventory.length-(14 * inventory_page),14); i += 1){
+				context.fillText(inventory[i + (14*inventory_page)].name,20,73 + 55*i)
+			}
+			if (inventory.length > 14 + (14 * inventory_page)){
+				context.beginPath();
+				context.moveTo(width/6 - 10,height - 20);
+				context.lineTo(width/6 +10,height - 35);
+				context.lineTo(width/6 - 30,height - 35);
+				context.fill();
+			} 
+			if (inventory_page > 0){
+				context.beginPath();
+				context.moveTo(width/6 - 10,20);
+				context.lineTo(width/6 +10,35);
+				context.lineTo(width/6 - 30,35);
+				context.fill();
 			}
 			//player equipment
 			for (i = 0; i < player.equipment.length;i += 1){
@@ -165,7 +194,7 @@
 			}
 			//inventory pointer and item description
 			if (menu_pointer === 0){
-				context.strokeRect(15,15 + 55 * inventory_pointer,(width/3)-30,47);
+				context.strokeRect(15,35 + 55 * (inventory_pointer - (14 * inventory_page)),(width/3)-30,47);
 				context.font = "bolder 30px Arial";
 				context.fillText(inventory[inventory_pointer].description,(width/3) + 15,(height/2)+50);
 				if (inventory[inventory_pointer].type === "armour"){
@@ -207,6 +236,7 @@
   
     function controls(event){
 		key_code = event.keyCode;
+		used_action = true
 		grid[player.y][player.x] = 0;
 		if (key_code === 87){
 			//w
@@ -254,6 +284,8 @@
 			//i
 			game_state = -2;
 			inventory_pointer = 0;
+			inventory_page = 0;
+			not_in_inventory = false;
 			if (inventory.length > 0){
 				menu_pointer = 0;
 			}
@@ -268,20 +300,12 @@
 				player.y = stairs.y + 0;
 			}
 		}
-		else if (key_code === 72){
-			//h
-			not_used = true;
-			i = 0;
-			while (i <inventory.length && not_used){
-			    if (inventory[i].type === "potion"){
-					potion("use",i);
-					not_used = false;
-			    }
-				i += 1;
-			}
+		else if (key_code === 88){
+			//x - used to wait/do nothing
 		}
 		else{
 			console.log(key_code);
+			used_action = false;
 		}
 		grid[player.y][player.x] = 100;
     }
@@ -291,6 +315,7 @@
 		if (key_code === 73 || key_code === 27){
 			//i || esc
 			game_state = 1;
+			not_in_inventory = true
 		}
 		else if (key_code === 69){
 			//e
@@ -311,6 +336,9 @@
 						menu_pointer = 1
 					}
 					else if (inventory_pointer > inventory.length-1){
+						if (inventory.length - (14 * inventory_page) <= 0){
+						    inventory_page -= 1
+						}
 						inventory_pointer -= 1 ;
 					}
 				}
@@ -318,9 +346,20 @@
 		}
 		else if (key_code === 87){
 			//w
-			if (game_state === -2){		
-				if (inventory_pointer > 0){
-					inventory_pointer -= 1;
+			if (game_state === -2){
+				if (menu_pointer === 0){
+					if (inventory_pointer > 0 + (14 * inventory_page)){
+						inventory_pointer -= 1;
+					}
+					else if(inventory_page > 0){
+						inventory_pointer -= 1;
+						inventory_page -= 1;
+					}
+				}
+				else {
+					if (inventory_pointer > 0){
+						inventory_pointer -= 1;
+					}
 				}
 			}
 		}
@@ -328,8 +367,11 @@
 			//s
 			if (game_state === -2){
 				if (menu_pointer === 0){
-					if (inventory_pointer < inventory.length - 1){
+					if (inventory_pointer < inventory.length-1){
 						inventory_pointer += 1;
+					}
+					if (inventory_pointer > 13 + (14 * inventory_page)){
+						inventory_page += 1;
 					}
 				}
 				else{
@@ -340,10 +382,11 @@
 			}
 		}
 		else if (key_code === 65){
-			//w
+			//a
 			if (game_state === -2){
 				if (menu_pointer != 0 && inventory.length > 0){
 					menu_pointer = 0;
+					inventory_pointer += (14 * inventory_page)
 					if (inventory_pointer > inventory.length - 1){
 						inventory_pointer = inventory.length - 1;
 					} 
@@ -351,13 +394,11 @@
 			}
 		}
 		else if (key_code ===  68){
-			//s
+			//d
 			if (game_state === -2){
 				if (menu_pointer != 1){
 					menu_pointer = 1;
-					if (inventory_pointer > 6){
-						inventory_pointer = 6
-					}
+					inventory_pointer = 0;
 				}
 			}
 		}
@@ -371,6 +412,9 @@
 						menu_pointer = 1;
 					}
 					else if (inventory_pointer > inventory.length-1){
+						if (inventory.length - (14 * inventory_page) <= 0){
+						    inventory_page -= 1
+						}
 						inventory_pointer -= 1 ;
 					}
 				}
@@ -391,7 +435,7 @@
     }
     
     function checkCollision(x,y){
-		if (grid[y][x] >= 20){
+		if (grid[y][x] === 2){
 			for (i = 0;i < enemies.length; i += 1){
 				if (enemies[i].x === x && enemies[i].y === y){
 					enemies[i].health -= player.damage;
@@ -417,11 +461,11 @@
 	    }
 	    level += 1;
 	    grid[player.y][player.x] = 100;
-	    if (level%10 === 0 || level === 1){
-		generateEnemy(1,"boss");
+	    if (level%10 === 0){
+			generateEnemy(1,"boss");
 	    }
 	    else{
-		generateEnemy(3,"enemy");
+			generateEnemy(3,"enemy");
 	    }
 	    main(0);
 	    stairs.x = getRandomNumber(6, grid_x - 6);
@@ -436,58 +480,76 @@
     function generateEnemy(n,type){
 		if (type === "enemy"){
 			while (enemies.length < n){
-				var enemy_type = getRandomNumber(1,Math.ceil(level/10));
+				enemy_number= getRandomNumber(1,2);
 				enemy_x = getRandomNumber(6,grid_x-6);
 				enemy_y = getRandomNumber(6,grid_y-6);
 				if (grid[enemy_y][enemy_x] === 0){
-					if (enemy_type === 1){
+					if (enemy_number === 1){
 					    enemy = {
 						    x: enemy_x,
 						    y: enemy_y,
 						    can_move:true,
 						    alive: true,
-						    health: 2 + 6*level,
-						    max_health: 2 + 6*level,
-						    damage:10 + 5*(level-1),
+						    health: 30 + 25*level,
+						    max_health: 30 + 25*level,
+						    damage:8 + 5*(level-1),
 						    exp:1 + 4*level + ((level-1) * (level -1)),
-						    id:20
+							image: rat_image
 					    };
 					}
-					else if (enemy_type === 2){
+					else if (enemy_number === 2){
 					    enemy = {
 						    x: enemy_x,
 						    y: enemy_y,
 						    can_move:true,
 						    alive: true,
-						    health: 5 + 7*level,
-						    max_health: 5 + 7*level,
-						    damage:6 + 4*(level-1),
+						    health: 20 + 20*level,
+						    max_health: 20 + 20*level,
+						    damage:10 + 6*(level-1),
 						    exp:1 + 4*level + ((level-1) * (level -1)),
-						    id:21
+							image:snake_image
 					    };
 					}
-					    grid[enemy_y][enemy_x] = enemy.id;
+					    grid[enemy_y][enemy_x] = 2;
 					    enemies.push(enemy);
 				}
 			}
 		}
 		else if (type === "boss"){
-			enemy_x = getRandomNumber(6,grid_x-6);
-			enemy_y = getRandomNumber(6,grid_y-6);
-			if (grid[enemy_y][enemy_x] === 0){
-				enemy = {
-					x: enemy_x,
-					y: enemy_y,
-					can_move:true,
-					alive: true,
-					health: 200 + 25*level,
-					max_health: 200 + 25*level,
-					damage:10 + 5*(level-1),
-					exp:100 + 6*level + 2*((level-1) * (level -1)),
-					id:30
-				};
-				grid[enemy_y][enemy_x] = enemy.id;
-				enemies.push(enemy);
+			while (enemies.length < n){
+				enemy_number = getRandomNumber(1,2);
+				enemy_x = getRandomNumber(6,grid_x-6);
+				enemy_y = getRandomNumber(6,grid_y-6);
+				if (grid[enemy_y][enemy_x] === 0){
+					if (enemy_number === 1){
+						enemy = {
+							x: enemy_x,
+							y: enemy_y,
+							can_move:true,
+							alive: true,
+							health: 300 + 55*level,
+							max_health: 300 + 55*level,
+							damage:10 + 6*level,
+							exp:100 + 6*level + 2*((level-1) * (level -1)),
+							image:rat_king_image
+						};
+					}
+					else if (enemy_number === 2){
+						enemy = {
+							x: enemy_x,
+							y: enemy_y,
+							can_move:true,
+							alive: true,
+							health: 200 + 45*level,
+							max_health: 200 + 45*level,
+							damage:12 + 8*level,
+							exp:100 + 6*level + 2*((level-1) * (level -1)),
+							image:snake_queen_image
+						};
+					}
+					grid[enemy_y][enemy_x] = 2;
+					enemies.push(enemy);
+				}
 			}
 		}
     }
@@ -558,7 +620,7 @@
 				}
 			}
 		}
-		grid[enemies[i].y][enemies[i].x] = enemies[i].id;
+		grid[enemies[i].y][enemies[i].x] = 2;
     }
     
     function combatEnemies(){
@@ -605,11 +667,11 @@
 	    }
 	    
 	    if (player.exp >= player.exp_to_next_level){
-		    player.damage += 3*player.level;
-		    player.max_health += 5*player.level;
+		    player.damage += 2*player.level;
+		    player.max_health +=10 + 6*player.level;
 		    player.level += 1;
 		    player.health = player.max_health;
-		    player.exp_to_next_level += 5 + (player.exp_to_next_level/2);
+		    player.exp_to_next_level += 5 + Math.round((player.exp_to_next_level/2));
 	    }
 	    if (player.x === chest.x && player.y === chest.y){
 		chest.x = -1
@@ -620,22 +682,23 @@
     function playerInfo(){
 	    //outlines for info
 	    context.clearRect(height,0,250,height);
-	    context.strokeStyle = "#669999";
+	    context.strokeStyle = "#8a8a5c";
 	    context.lineWidth = 8;
 	    context.strokeRect((height)+10,10,230,(height/2)-20);
 	    context.strokeRect((height)+10,(height/2)+10,230,(height/2)-20);
 	    context.font = "bolder 35px Arial";
 	    context.textAlign = "left";
-	    context.fillStyle =  "#669999";
+	    context.fillStyle =  "#8a8a5c";
 	    //name,health level etc
-	    context.fillText("Player Name",(height)+20,50);
+	    context.fillText(player_name,(height)+20,50);
 	    context.fillText("Health:"+Math.ceil(player.health),(height)+20,90);
 	    context.fillText("Armour:"+player.defense,(height)+20,130);
 	    context.fillText("Damage:"+player.damage,(height)+20,170);
 	    context.fillText("Floor:"+level,(height)+20,210);
 	    context.fillText("Level:"+player.level,(height)+20,250);
-	    context.fillText("Exp:"+player.exp+"/"+player.exp_to_next_level,(height)+20,290);
-	    context.fillText("Gold:"+player.gold,(height)+20,330);
+	    context.fillText("Exp:"+player.exp+"/",(height)+20,290);
+	    context.fillText("        "+player.exp_to_next_level,(height)+20,330);
+	    context.fillText("Gold:"+player.gold,(height)+20,370);
     }
 	
     function potion(fcn,i){
@@ -772,15 +835,16 @@
 	    player_image.src = "images/player.png";
 	    stairs_image.src = "images/door.png";
 	    rat_image.src = "images/rat.png";
+		rat_king_image.src = "images/rat_king.png";
+		snake_image.src = "images/snake.png";
+		snake_queen_image.src = "images/snake_queen.png";
 	    floor_image.src = "images/floor.png";
 	    wall_image.src = "images/wall.png";
 		chest_image.src = "images/chest.png";
-		rat_king_image.src = "images/rat_king.png";
     }
 
-    function getRandomNumber(min, max) {
+    function getRandomNumber(min, max){
 	    return Math.round(Math.random() * (max - min)) + min;
     }
   
-
 })(); 

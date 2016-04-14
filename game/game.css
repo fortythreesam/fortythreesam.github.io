@@ -3,29 +3,18 @@ canvas {
     background: #151515;
     margin-left: auto;
     margin-right: auto;
-    border: 1px solid white;
 }  
-
-a{
-	text-decoration: none;
-}
-
-a:link {
-	color:#000000;
-}
-
-a:visited {
-	color:#000000;
-}
 
 body{
     background-image: url("background.png");
 } 
 
 main{
-    float:left;
-    width: 70%;
-    padding: 1em;
+    margin:auto;
+    width: 1200px;
+    float:center;
+    text-align: center;
+    padding: 1%;
     border-style:solid;
     border-width:5px;
     border-color: #222222;
@@ -39,11 +28,14 @@ header {
     border-width:5px;
     border-color: #222222;
     padding: 0;
-    background-image: url("otherbackground.png")
+    background-image: url("otherbackground.png");
 }
 
 section{
-	margin: 2.5px;
+    margin:auto;
+    float:center;
+    text-align: center;
+    width:1100px;
     border-style:solid;
     border-width:5px;
     border-color: #222222;
@@ -51,14 +43,6 @@ section{
     padding :1%;
 }
 
-aside{
-    margin-left:75%;
-    border-style:solid;
-    border-width:5px;
-    border-color: #222222;
-    background-image: url("otherbackground.png");
-    padding: 1em;
-}
 
 h{
     font-size:2em;

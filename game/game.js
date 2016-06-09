@@ -723,14 +723,14 @@
     }
     
     function floodFill(y,x){
-	if (map[y][x] === -1){
-	    map[y][x] = 0;
-	    tiles += 1;
-	    floodFill(y-1,x);
-	    floodFill(y+1,x);
-	    floodFill(y,x-1);
-	    floodFill(y,x+1);
-	}
+		if (map[y][x] === -1){
+			map[y][x] = 0;
+			tiles += 1;
+			floodFill(y-1,x);
+			floodFill(y+1,x);
+			floodFill(y,x-1);
+			floodFill(y,x+1);
+		}
     }
 	
     function generateEnemy(n,type){

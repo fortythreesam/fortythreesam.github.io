@@ -11,12 +11,16 @@
 			decceleration:0.1,
 			handling: 0.10,
 			moving_direction: 0,
-			facing_direction:0
+			facing_direction:0,
+			image_index:0,
+			elasticity:0.1,
 		};
 	var vehicle_image = new Image();
 	vehicle_image.src = "images/ship_image.png";
 	var bullet_image = new Image();
 	bullet_image.src = "images/bullet_image.png";
+	var gate_image = new Image();
+	gate_image.src = "images/gate_image.png"
 	var bullets = []
 	var bullet_timer = 0;
 	var image_index = 0;
@@ -25,20 +29,45 @@
 	var counterclockwise = false;
 	var reverse = false;
 	var shooting = false;
-
+	var gate = {
+		x:0,
+		y:0,
+		image_index:0
+	};
     document.addEventListener('DOMContentLoaded', init, false);
   
     function init(){
         canvas = document.querySelector('canvas');
         context = canvas.getContext('2d');
+		if (window.innerWidth-18< 1200){
+			canvas.width = 1200;
+		}
+		else if (window.innerWidth-18 > 2200){
+			canvas.width = 2200
+		}
+		else{
+			canvas.width = window.innerWidth - 18;
+		}
+		if (window.innerHeight-18< 800){
+			canvas.height = 800;
+		}
+		else if (window.innerHeight-18 > 1200){
+			canvas.height = 1200
+		}
+		else{
+			canvas.height = window.innerHeight - 18;
+		}
         width = canvas.width;
         height = canvas.height;
+		gate.x = width/2;
+		gate.y = height/2;
 		window.setInterval(update,16);
 		window.addEventListener("keydown",controls);
 		window.addEventListener("keyup",controlsEnd);
     }
 	
 	function update(){
+	    //calculationg the x and y speed of the ship
 		if (accelerating && reverse === false){
 			if (Math.abs(vehicle.x_speed) >= Math.abs(vehicle.max_speed * Math.cos(vehicle.facing_direction))){
 				vehicle.x_speed -= Math.sign(vehicle.x_speed)-1*vehicle.acceleration * Math.cos(vehicle.facing_direction)
@@ -61,6 +90,7 @@
 				vehicle.y_speed = 0
 			}
 		}
+		//finding any change of direction
 		if (counterclockwise){
 			if (vehicle.facing_direction + vehicle.handling > (2*Math.PI)){
 				vehicle.facing_direction = 0 + (vehicle.handling - ((2*Math.PI) - vehicle.facing_direction));
@@ -77,9 +107,40 @@
 				vehicle.facing_direction -= vehicle.handling;
 			}
 		}
+		//vehicle and gate collision(maybe change to intersection between 2 lines between given points)
+		if (vehicle.y+32+vehicle.y_speed >	gate.y-128 && vehicle.y-32+vehicle.y_speed < gate.y+128&&
+			vehicle.x+32+vehicle.x_speed > gate.x-32  && vehicle.x-32+vehicle.x_speed < gate.x+32){
+				if (vehicle.x < gate.x-32 &&
+				    vehicle.y >	gate.y-128 && vehicle.y < gate.y+128){
+					vehicle.x = gate.x-64
+					vehicle.x_speed = vehicle.x_speed * -1 * vehicle.elasticity
+				}
+				else if(vehicle.x > gate.x+32 &&
+				        vehicle.y >	gate.y-128 && vehicle.y < gate.y+128){
+					vehicle.x = gate.x+64
+					vehicle.x_speed = vehicle.x_speed * -1 * vehicle.elasticity
+				}
+				if (vehicle.y < gate.y-128 &&
+				    vehicle.x > gate.x-32  && vehicle.x < gate.x+32){
+					vehicle.y = gate.y-160
+					vehicle.y_speed = vehicle.y_speed * -1 * vehicle.elasticity
+				}
+				else if(vehicle.y > gate.y+128 &&
+				        vehicle.x > gate.x-32  && vehicle.x < gate.x+32){
+					vehicle.y = gate.y+160
+					vehicle.y_speed = vehicle.y_speed * -1 * vehicle.elasticity
+				}
+				
+				
+		}
+		//updating the variables
 		vehicle.x += vehicle.x_speed;
 		vehicle.y += vehicle.y_speed;
-		image_index = Math.round((vehicle.facing_direction * (180/Math.PI))/2);
+		vehicle.image_index = Math.round((vehicle.facing_direction * (180/Math.PI))/2);
+		if (vehicle.image_index === 180){
+			vehicle.image_index = 0;
+		}
+		//ship bullets
 		if (bullet_timer > 0){
 		    bullet_timer -= 1
 		}else if (shooting && bullet_timer == 0){
@@ -101,10 +162,7 @@
 				bullets.splice(i,1)
 			}    
 		}
-		if (image_index === 180){
-			image_index = 0;
-		}		
-		
+		//making sure the ship isnt out of bounds
 		if (vehicle.x > width + 32){
 			vehicle.x = -31
 		}
@@ -126,7 +184,9 @@
 		for(var i = 0; i < bullets.length; i += 1){
 			context.drawImage(bullet_image,0 + 48*bullets[i].image_index,0,48,48,bullets[i].x-24,bullets[i].y-24,48,48);
 		}
-		context.drawImage(vehicle_image,0 + 64*image_index,0,64,64,vehicle.x-32,vehicle.y-32,64,64);
+		context.drawImage(gate_image,0 + 256*gate.image_index,0,256,256,gate.x-128,gate.y-128,256,256);
+		context.drawImage(vehicle_image,0 + 64*vehicle.image_index,0,64,64,vehicle.x-32,vehicle.y-32,64,64);
+		
 	}
 	
 	function controls(event) {
@@ -172,7 +232,7 @@
 			shooting = false
 		}
 	}
-  
+	
     function getRandomNumber(min, max) {
 		return Math.round(Math.random() * (max - min)) + min;
     }

@@ -6,10 +6,10 @@
 			speed: 0,
 			x_speed:0,
 			y_speed:0,	
-			max_speed: 50,
-			acceleration: 0.7,
-			decceleration:0.1,
-			handling: 0.10,
+			max_speed: 10,
+			acceleration: 0.15,
+			decceleration:0.01,
+			handling: 0.06,
 			moving_direction: 0,
 			facing_direction:0,
 			image_index:0,
@@ -30,10 +30,14 @@
 	var reverse = false;
 	var shooting = false;
 	var gate = {
-		x:0,
-		y:0,
-		image_index:0
+		x1:0,
+		y1:0,
+		x2:0,
+		y2:200,
+		distance: 200,
+		angle:0,
 	};
+	var score = -1
     document.addEventListener('DOMContentLoaded', init, false);
   
     function init(){
@@ -59,35 +63,26 @@
 		}
         width = canvas.width;
         height = canvas.height;
-		gate.x = width/2;
-		gate.y = height/2;
-		window.setInterval(update,16);
+		generateNewGate()
+		window.setInterval(update,8);
 		window.addEventListener("keydown",controls);
 		window.addEventListener("keyup",controlsEnd);
     }
 	
 	function update(){
 	    //calculationg the x and y speed of the ship
-		if (accelerating && reverse === false){
+		if (accelerating ){
 			if (Math.abs(vehicle.x_speed) >= Math.abs(vehicle.max_speed * Math.cos(vehicle.facing_direction))){
-				vehicle.x_speed -= Math.sign(vehicle.x_speed)-1*vehicle.acceleration * Math.cos(vehicle.facing_direction)
+				vehicle.x_speed -= Math.sign(vehicle.x_speed)-1 * Math.sign(Math.cos(vehicle.facing_direction))*vehicle.acceleration//Math.sign(vehicle.x_speed)-1*vehicle.acceleration * Math.cos(vehicle.facing_direction)
 			}
 			else{
-				vehicle.x_speed += (vehicle.acceleration * Math.cos(vehicle.facing_direction))
+				vehicle.x_speed += (vehicle.acceleration *  Math.sign(Math.cos(vehicle.facing_direction)))
 			}
 			if (Math.abs(vehicle.y_speed) >= Math.abs(vehicle.max_speed * Math.sin(vehicle.facing_direction))){
-				vehicle.y_speed -= Math.sign(vehicle.y_speed)-1 * (vehicle.acceleration * Math.sin(vehicle.facing_direction))
+				vehicle.y_speed -= Math.sign(vehicle.y_speed)-1 * Math.sign(Math.sin(vehicle.facing_direction))*vehicle.acceleration//Math.sign(vehicle.y_speed)-1 * (vehicle.acceleration * Math.sin(vehicle.facing_direction))
 			}
 			else{
-				vehicle.y_speed += -1 * (vehicle.acceleration * Math.sin(vehicle.facing_direction))
-			}
-		}
-		else{
-			if(Math.abs(vehicle.x_speed) < 0.5){
-				vehicle.x_speed = 0
-			}
-			if(Math.abs(vehicle.y_speed) < 0.5){
-				vehicle.y_speed = 0
+				vehicle.y_speed += -1 * (vehicle.acceleration *  Math.sign(Math.sin(vehicle.facing_direction)))
 			}
 		}
 		//finding any change of direction
@@ -107,32 +102,22 @@
 				vehicle.facing_direction -= vehicle.handling;
 			}
 		}
-		//vehicle and gate collision(maybe change to intersection between 2 lines between given points)
-		if (vehicle.y+32+vehicle.y_speed >	gate.y-128 && vehicle.y-32+vehicle.y_speed < gate.y+128&&
-			vehicle.x+32+vehicle.x_speed > gate.x-32  && vehicle.x-32+vehicle.x_speed < gate.x+32){
-				if (vehicle.x < gate.x-32 &&
-				    vehicle.y >	gate.y-128 && vehicle.y < gate.y+128){
-					vehicle.x = gate.x-64
-					vehicle.x_speed = vehicle.x_speed * -1 * vehicle.elasticity
-				}
-				else if(vehicle.x > gate.x+32 &&
-				        vehicle.y >	gate.y-128 && vehicle.y < gate.y+128){
-					vehicle.x = gate.x+64
-					vehicle.x_speed = vehicle.x_speed * -1 * vehicle.elasticity
-				}
-				if (vehicle.y < gate.y-128 &&
-				    vehicle.x > gate.x-32  && vehicle.x < gate.x+32){
-					vehicle.y = gate.y-160
-					vehicle.y_speed = vehicle.y_speed * -1 * vehicle.elasticity
-				}
-				else if(vehicle.y > gate.y+128 &&
-				        vehicle.x > gate.x-32  && vehicle.x < gate.x+32){
-					vehicle.y = gate.y+160
-					vehicle.y_speed = vehicle.y_speed * -1 * vehicle.elasticity
-				}
-				
-				
+		//vehicle and gate collision
+		for (var i = 0; i <= gate.distance/16; i += 1){
+			var gate_x_collision = gate.x1 + i*16*Math.sin(gate.angle)
+			var gate_y_collision = gate.y1 + i*16*Math.cos(gate.angle)
+			//var gate_x_high = Math.max(gate_x_collision,gate_x_collision + 20*Math.sign(Math.sin(gate.angle)))
+			var gate_x_low = Math.min(gate_x_collision,gate_x_collision + 16*Math.sign(Math.sin(gate.angle)))
+			//var gate_y_high = Math.max(gate_y_collision,gate_y_collision + 20*Math.sign(Math.cos(gate.angle)))
+			var gate_y_low = Math.min(gate_y_collision,gate_y_collision + 16*Math.sign(Math.cos(gate.angle)))
+			if (vehicle.x+32+vehicle.x_speed > gate_x_low
+			    &&vehicle.x+32+vehicle.x_speed < gate_x_low+24
+			    &&vehicle.y+32+vehicle.y_speed > gate_y_low
+			    &&vehicle.y+32+vehicle.y_speed < gate_y_low+24){
+			    generateNewGate()
+			}
 		}
+		
 		//updating the variables
 		vehicle.x += vehicle.x_speed;
 		vehicle.y += vehicle.y_speed;
@@ -184,7 +169,8 @@
 		for(var i = 0; i < bullets.length; i += 1){
 			context.drawImage(bullet_image,0 + 48*bullets[i].image_index,0,48,48,bullets[i].x-24,bullets[i].y-24,48,48);
 		}
-		context.drawImage(gate_image,0 + 256*gate.image_index,0,256,256,gate.x-128,gate.y-128,256,256);
+		context.drawImage(gate_image,gate.x1,gate.y1,32,32);
+		context.drawImage(gate_image,gate.x2,gate.y2,32,32);
 		context.drawImage(vehicle_image,0 + 64*vehicle.image_index,0,64,64,vehicle.x-32,vehicle.y-32,64,64);
 		
 	}
@@ -231,6 +217,16 @@
 			
 			shooting = false
 		}
+	}
+	
+	function generateNewGate(){
+	    gate.x1 = getRandomNumber(200,width-200)
+	    gate.y1 = getRandomNumber(200,height-200)
+	    gate.angle = (getRandomNumber(1,360)/360)*Math.PI
+	    gate.x2 = gate.x1 + Math.sin(gate.angle)*gate.distance 
+	    gate.y2 = gate.y1 + Math.cos(gate.angle)*gate.distance
+	    score += 1
+	    console.log(score)
 	}
 	
     function getRandomNumber(min, max) {

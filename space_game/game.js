@@ -6,10 +6,10 @@
 			speed: 0,
 			x_speed:0,
 			y_speed:0,	
-			max_speed: 10,
-			acceleration: 0.15,
+			max_speed: 14,
+			acceleration: 0.8,
 			decceleration:0.01,
-			handling: 0.06,
+			handling: 0.12,
 			moving_direction: 0,
 			facing_direction:0,
 			image_index:0,
@@ -21,6 +21,8 @@
 	bullet_image.src = "images/bullet_image.png";
 	var gate_image = new Image();
 	gate_image.src = "images/gate_image.png"
+	var next_gate_image = new Image();
+	next_gate_image.src = "images/next_gate_image.png"
 	var bullets = []
 	var bullet_timer = 0;
 	var image_index = 0;
@@ -32,12 +34,19 @@
 	var gate = {
 		x1:0,
 		y1:0,
-		x2:0,
-		y2:200,
-		distance: 200,
 		angle:0,
+		x2:0,
+		y2:0,
+		next_x1:0,
+		next_y1:0,
+		next_angle:0,
+		next_x2:0,
+		next_y2:0,
+		distance: 200,
 	};
-	var score = -1
+	var score = -1;
+	var score_displat = false;
+	var score_color = 230;
     document.addEventListener('DOMContentLoaded', init, false);
   
     function init(){
@@ -63,8 +72,13 @@
 		}
         width = canvas.width;
         height = canvas.height;
+		gate.next_x1=getRandomNumber(200,width-200)
+		gate.next_y1=getRandomNumber(200,height-200)
+		gate.next_angle=(getRandomNumber(1,360)/360)*Math.PI
+		gate.next_x2=gate.next_x1 + Math.sin(gate.next_angle)*gate.distance
+		gate.next_y2=gate.next_y1 + Math.cos(gate.next_angle)*gate.distance
 		generateNewGate()
-		window.setInterval(update,8);
+		window.setInterval(update,16);
 		window.addEventListener("keydown",controls);
 		window.addEventListener("keyup",controlsEnd);
     }
@@ -72,17 +86,29 @@
 	function update(){
 	    //calculationg the x and y speed of the ship
 		if (accelerating ){
-			if (Math.abs(vehicle.x_speed) >= Math.abs(vehicle.max_speed * Math.cos(vehicle.facing_direction))){
-				vehicle.x_speed -= Math.sign(vehicle.x_speed)-1 * Math.sign(Math.cos(vehicle.facing_direction))*vehicle.acceleration//Math.sign(vehicle.x_speed)-1*vehicle.acceleration * Math.cos(vehicle.facing_direction)
+			if (Math.abs(vehicle.x_speed) > Math.abs(vehicle.max_speed * Math.cos(vehicle.facing_direction))){
+				Math.sign(vehicle.x_speed)-1*vehicle.acceleration * Math.cos(vehicle.facing_direction)
+				if(vehicle.x_speed > 0){
+				    vehicle.x_speed -= Math.abs(Math.cos(vehicle.facing_direction)*vehicle.acceleration)
+				}
+				else{
+				    vehicle.x_speed += Math.abs(Math.cos(vehicle.facing_direction)*vehicle.acceleration)
+				}
 			}
 			else{
-				vehicle.x_speed += (vehicle.acceleration *  Math.sign(Math.cos(vehicle.facing_direction)))
+				vehicle.x_speed += (vehicle.acceleration * Math.cos(vehicle.facing_direction))
 			}
-			if (Math.abs(vehicle.y_speed) >= Math.abs(vehicle.max_speed * Math.sin(vehicle.facing_direction))){
-				vehicle.y_speed -= Math.sign(vehicle.y_speed)-1 * Math.sign(Math.sin(vehicle.facing_direction))*vehicle.acceleration//Math.sign(vehicle.y_speed)-1 * (vehicle.acceleration * Math.sin(vehicle.facing_direction))
+			if (Math.abs(vehicle.y_speed) > Math.abs(vehicle.max_speed * Math.sin(vehicle.facing_direction))){
+				//Math.sign(vehicle.y_speed)-1 * (vehicle.acceleration * Math.sin(vehicle.facing_direction))
+				if(vehicle.y_speed > 0){
+				    vehicle.y_speed -= Math.abs(Math.sin(vehicle.facing_direction)*vehicle.acceleration)
+				}
+				else{
+				    vehicle.y_speed += Math.abs(Math.sin(vehicle.facing_direction)*vehicle.acceleration)
+				}
 			}
 			else{
-				vehicle.y_speed += -1 * (vehicle.acceleration *  Math.sign(Math.sin(vehicle.facing_direction)))
+				vehicle.y_speed += -1 * (vehicle.acceleration *  Math.sin(vehicle.facing_direction))
 			}
 		}
 		//finding any change of direction
@@ -103,21 +129,29 @@
 			}
 		}
 		//vehicle and gate collision
-		for (var i = 0; i <= gate.distance/16; i += 1){
-			var gate_x_collision = gate.x1 + i*16*Math.sin(gate.angle)
-			var gate_y_collision = gate.y1 + i*16*Math.cos(gate.angle)
+		context.clearRect(0,0,width,height);
+		for (var i = 2; i <= gate.distance/16 - 1; i += 1){
+			var gate_x_collision = gate.x1 + 16 + i*16*Math.sin(gate.angle)
+			var gate_y_collision = gate.y1 + 16 + i*16*Math.cos(gate.angle)
 			//var gate_x_high = Math.max(gate_x_collision,gate_x_collision + 20*Math.sign(Math.sin(gate.angle)))
-			var gate_x_low = Math.min(gate_x_collision,gate_x_collision + 16*Math.sign(Math.sin(gate.angle)))
+			//var gate_x_low = Math.min(gate_x_collision,gate_x_collision + 16*Math.sign(Math.sin(gate.angle)))
 			//var gate_y_high = Math.max(gate_y_collision,gate_y_collision + 20*Math.sign(Math.cos(gate.angle)))
-			var gate_y_low = Math.min(gate_y_collision,gate_y_collision + 16*Math.sign(Math.cos(gate.angle)))
-			if (vehicle.x+32+vehicle.x_speed > gate_x_low
-			    &&vehicle.x+32+vehicle.x_speed < gate_x_low+24
-			    &&vehicle.y+32+vehicle.y_speed > gate_y_low
-			    &&vehicle.y+32+vehicle.y_speed < gate_y_low+24){
+			//var gate_y_low = Math.min(gate_y_collision,gate_y_collision + 16*Math.sign(Math.cos(gate.angle)))
+			context.fillRect(gate_x_collision-12,gate_y_collision-12,24,24)
+			if (vehicle.x+vehicle.x_speed > gate_x_collision - 12
+			    &&vehicle.x+vehicle.x_speed < gate_x_collision + 12
+			    &&vehicle.y+vehicle.y_speed > gate_y_collision - 12
+			    &&vehicle.y+vehicle.y_speed < gate_y_collision + 12){
 			    generateNewGate()
 			}
 		}
-		
+		/*if (vehicle.x + vehicle.x_speed > gate.x1 - 16 &&
+		    vehicle.x + vehicle.x_speed < gate.x1 + 16 &&
+		    vehicle.y + vehicle.y_speed > gate.y1 - 16 &&
+		    vehicle.y + vehicle.y_speed < gate.y1 + 16){
+			vehicle.x_speed = vehicle.x_speed * -1 * vehicle.elasticity
+			vehicle.y_speed = vehicle.y_speed * -1 * vehicle.elasticity
+		    }*/
 		//updating the variables
 		vehicle.x += vehicle.x_speed;
 		vehicle.y += vehicle.y_speed;
@@ -132,12 +166,12 @@
 		    bullet = {
 				x:vehicle.x,
 				y:vehicle.y,
-				speed:70,
+				speed:35,
 				direction:vehicle.facing_direction,
 				image_index: Math.round((vehicle.facing_direction * (180/Math.PI))/2)%180
 				}
 				bullets.push(bullet)
-				bullet_timer = 15
+				bullet_timer = 30
 		}
 		for(var i = 0; i < bullets.length; i += 1){
 			bullets[i].x += Math.cos(bullets[i].direction)*bullets[i].speed
@@ -165,14 +199,25 @@
 	}
 	
 	function draw() {
-		context.clearRect(0,0,width,height);
+		//context.clearRect(0,0,width,height);
+		if (score_display){ 
+			context.textAlign = "center"
+			context.fillStyle = "rgb("+score_color+","+score_color+","+score_color+")"
+			context.font = "600px Impact"
+			context.fillText(""+score,width/2,height/1.5)
+			score_color -= 5
+			if (score_color < 30){
+				score_display = false
+			}
+		}
 		for(var i = 0; i < bullets.length; i += 1){
 			context.drawImage(bullet_image,0 + 48*bullets[i].image_index,0,48,48,bullets[i].x-24,bullets[i].y-24,48,48);
 		}
 		context.drawImage(gate_image,gate.x1,gate.y1,32,32);
 		context.drawImage(gate_image,gate.x2,gate.y2,32,32);
+		context.drawImage(next_gate_image,gate.next_x1,gate.next_y1,32,32);
+		context.drawImage(next_gate_image,gate.next_x2,gate.next_y2,32,32);
 		context.drawImage(vehicle_image,0 + 64*vehicle.image_index,0,64,64,vehicle.x-32,vehicle.y-32,64,64);
-		
 	}
 	
 	function controls(event) {
@@ -220,13 +265,24 @@
 	}
 	
 	function generateNewGate(){
-	    gate.x1 = getRandomNumber(200,width-200)
-	    gate.y1 = getRandomNumber(200,height-200)
-	    gate.angle = (getRandomNumber(1,360)/360)*Math.PI
-	    gate.x2 = gate.x1 + Math.sin(gate.angle)*gate.distance 
-	    gate.y2 = gate.y1 + Math.cos(gate.angle)*gate.distance
+	    gate.x1 = gate.next_x1+0
+	    gate.y1 = gate.next_y1+0
+	    gate.angle = gate.next_angle+0
+	    gate.x2 = gate.next_x2+0
+	    gate.y2 = gate.next_y2+0
+		gate.next_x1 = getRandomNumber(200,width-200)
+		gate.next_y1 = getRandomNumber(200,height-200)
+		gate.next_angle = (getRandomNumber(1,360)/360)*Math.PI
+		gate.next_x2 = gate.next_x1 + Math.sin(gate.next_angle)*gate.distance
+		gate.next_y2 = gate.next_y1 + Math.cos(gate.next_angle)*gate.distance
 	    score += 1
+		score_color = 230
+		score_display = true
 	    console.log(score)
+		console.log(gate.x1,gate.next_x1)
+		console.log(gate.y1,gate.next_y1)
+		console.log(gate.x2,gate.next_x2)
+		console.log(gate.y2,gate.next_y2)
 	}
 	
     function getRandomNumber(min, max) {

@@ -2,9 +2,11 @@
   
 	var game_state;
 	var level;
+	var level_obs = [];
 	var player = {}
-	var player_image = new Image()
-	player_image.src = "images/player.png"
+	var player_image = new Image();
+	player_image.src = "images/player.png";
+	var door = {};
 	var gravity = 0.5;
 	var width;
 	var height;
@@ -18,19 +20,57 @@
         width = canvas.width;
         height = canvas.height;
 		
-		game_state = 1;
-		level = level1;
-		
 		player.on_ground = false;
 		player.right = 0;
 		player.left = 0;
 		player.speedx = 0;
 		player.speedy = 0;
-		player.max_speed= 7;
+		player.max_speed= 5;
+		player.max_speedy= 8;
 		player.acceleration = 0.3;
-		player.x = 300;
-		player.y = 300;
-		player.draw = function() {context.drawImage(player_image,player.x,player.y)};
+		player.deadparts = [];
+		player.draw = function() {
+			//context.drawImage(player_image,player.x,player.y);
+			context.fillStyle = "#898179";
+			context.fillRect(player.x,player.y,32,48)
+			for(var i = 0; i < player.deadparts.length; i ++){
+				player.deadparts[i].x += player.deadparts[i].speed*Math.sin(player.deadparts[i].direction*Math.PI/180);
+				player.deadparts[i].y += player.deadparts[i].speed*Math.cos(player.deadparts[i].direction*Math.PI/180);
+				player.deadparts[i].size = Math.max(0,player.deadparts[i].size - 1);
+				context.fillStyle = "#7A6F64";
+				context.fillRect(player.deadparts[i].x,player.deadparts[i].y,player.deadparts[i].size,player.deadparts[i].size);
+			}
+		};
+		player.kill = function(){
+			player.deadparts = [];
+			for(var i = 0; i < 30;i ++){
+				part = {
+					x:player.x + 14,
+					y:player.y + 22,
+					size:grn(13,17),
+					direction:grn(0,359),
+					speed:grn(3,7)
+				}
+				player.deadparts.push(part);
+			}
+			player.x = player.startx;
+			player.y = player.starty;
+			player.speedx = 0;
+			player.speedy = 0;
+		}
+		
+		game_state = 1;
+		level_num = 0
+		level = levels[level_num];
+		createLevel(level);
+		
+		door.draw = function(){
+			context.fillStyle = "#7B7E81";
+			context.globalAlpha = 0.3;
+			context.fillRect(door.x-4,door.y-4,40,56);
+			context.globalAlpha = 1;
+			context.fillRect(door.x,door.y,32,48);
+		}		
 		
 		window.setInterval(update,16);
 		window.addEventListener("keydown",controls);
@@ -40,12 +80,13 @@
 	function update(){
 		switch(game_state){
 			case 1:
+				moveObstacles();
 				if( player.direction == 0){
 					if(player.speedx > 0){
 						player.speedx -= player.acceleration * 3;
 					}
 					else{
-						player.speedx= 0;
+						player.speedx = 0;
 					}
 				}
 				else{
@@ -56,21 +97,22 @@
 						player.speedx = player.max_speed;
 					}
 				}
-				horizontalCollision()
-				verticalCollision();
 				if (player.on_ground){
 					player.speedy = 0;
 				}
 				else{
-					if(player.speedy < player.max_speed){
+					if(player.speedy < player.max_speedy){
 						player.speedy +=  gravity;
 					}
 					else{
-						player.speedy = player.max_speed;
+						player.speedy = player.max_speedy;
 					}
 				}
 				player.x += player.speedx * (player.right + player.left);
-				player.y += player.speedy
+				player.y += player.speedy;
+				horizontalCollision();
+				verticalCollision();
+				obstacleCollision();
 				break;
 		}
 	    draw()
@@ -82,7 +124,7 @@
 		context.fillRect(0,0,width,height)
 		switch(game_state){
 				case 1:
-					player.draw()
+					door.draw();
 					for (var y = 0; y < level.length; y ++){
 						for (var x = 0; x < level[y].length; x ++){
 							if (level[y][x] === 1){
@@ -91,6 +133,23 @@
 							}
 						}
 					}
+					for (var i = 0; i < level_obs.length;i ++){
+						switch(level_obs[i].id){
+							case 2:
+								context.fillStyle = "#883832";
+								if (level_obs[i].direction == 1){
+									context.globalAlpha = 0.2;
+									context.fillRect(level_obs[i].x,level_obs[i].y-16,32,32);
+									context.globalAlpha = 0.4;
+									context.fillRect(level_obs[i].x,level_obs[i].y-8,32,32);
+								}
+								context.globalAlpha = 1;
+								context.fillRect(level_obs[i].x,level_obs[i].y,32,32);
+								break;
+						}
+					}
+					player.draw();
+					break;
 		}
 	}
 	
@@ -107,13 +166,16 @@
 						player.right = 1;
 						break;
 					case 16:
-						player.max_speed= 13;
+						player.max_speed= 7;
 						break;
 					case 32:
 						if(player.on_ground){
 							player.speedy = - 12;
 							player.on_ground = false;
 						}
+						break;
+					case 75:
+						player.kill();
 						break;
 				}
 		}
@@ -131,35 +193,78 @@
 						player.right = 0;
 						break;
 					case 16:
-						player.max_speed = 7;
+						player.max_speed = 5;
 						break;
 				}
 		}
 	}
 	
+	function createLevel(next_level){
+		level_obs = []
+		for (var y = 0; y < level.length; y ++){
+			for (var x = 0; x < level[y].length; x ++){
+				switch(level[y][x]){
+					case 2:
+						var next_block = 0
+						while(true){
+							next_block += 1;
+							if(level[y+next_block][x] == 1){
+								break;
+							}
+						}
+						falling_block = {
+							id:2,
+							originaly:y*32,
+							finaly:(y+next_block-1)*32,
+							x:x*32,
+							y:y*32,
+							direction:1,
+						}
+						level_obs.push(falling_block);
+						level[y][x] = 0;
+						break;
+						
+					case -1:
+						door.id = -1;
+						door.x = x*32;
+						door.y = y*32-16;
+						level[y][x] = 0;
+						break;	
+
+					case -2:
+						player.x = x*32;
+						player.y = y*32 - 16;
+						player.startx = x*32;
+						player.starty = y*32 - 16;
+						level[y][x] = 0;
+						break;
+				}
+			}
+		}
+	}
+	
 	function horizontalCollision(){
 		if (player.right == 1){
-			if (level[Math.floor(player.y/32)][Math.floor((player.x + 33 + player.speedx)/32)] == 1 ||
-				level[Math.floor((player.y+23)/32)][Math.floor((player.x + 33 + player.speedx)/32)] == 1 ||
-				level[Math.floor((player.y+47)/32)][Math.floor((player.x + 33 + player.speedx)/32)] == 1){
-					player.x = Math.ceil(player.x/32)*32;
-					player.speedx = 0;
+			if (level[Math.floor(player.y/32)][Math.floor((player.x + 32 + player.speedx)/32)] == 1 ||
+				level[Math.floor((player.y+23)/32)][Math.floor((player.x + 32 + player.speedx)/32)] == 1 ||
+				level[Math.floor((player.y+47)/32)][Math.floor((player.x + 32 + player.speedx)/32)] == 1){
+					player.x = Math.ceil((player.x-1-player.speedx)/32)*32;
+					console.log(player.speedx);
 			}
 		}
 		if (player.left == -1){
-			if (level[Math.floor(player.y/32)][Math.floor((player.x -1 - player.speedx)/32)] == 1 ||
-			    level[Math.floor((player.y+23)/32)][Math.floor((player.x - 1 - player.speedx)/32)] == 1 ||
-			    level[Math.floor((player.y+47)/32)][Math.floor((player.x - 1 - player.speedx)/32)] == 1){
-					player.x = Math.floor(player.x/32)*32;
-					player.speedx = 0;
+			if (level[Math.floor(player.y/32)][Math.floor((player.x - player.speedx)/32)] == 1 ||
+			    level[Math.floor((player.y+23)/32)][Math.floor((player.x - player.speedx)/32)] == 1 ||
+			    level[Math.floor((player.y+47)/32)][Math.floor((player.x - player.speedx)/32)] == 1){
+					player.x = Math.floor((player.x+1 + player.speedx)/32)*32;
 			}
 		}
 	}
 	
 	function verticalCollision(){
 		if (player.speedy >= 0){
-			if(level[Math.floor((player.y + 49 + player.speedy)/32)][Math.floor(player.x/32)] == 1 ||
-			   level[Math.floor((player.y + 49 + player.speedy)/32)][Math.floor((player.x+31)/32)] == 1){
+			if(level[Math.floor((player.y + 50 + player.speedy)/32)][Math.floor(player.x/32)] == 1 ||
+			   level[Math.floor((player.y + 50 + player.speedy)/32)][Math.floor((player.x+31)/32)] == 1){
 				player.y = Math.ceil(player.y/32)*32-16;
 				player.on_ground = true;
 				player.speedy = 0;
@@ -177,7 +282,47 @@
 		}
 	}
 	
-    function getRandomNumber(min, max) {
+	function obstacleCollision(){
+		for(var i = 0;i < level_obs.length; i++){
+			switch(level_obs[i].id){
+				case 2:
+					if(player.x + 32 > level_obs[i].x && player.x < level_obs[i].x+32 &&
+					   player.y + 48 > level_obs[i].y && player.y < level_obs[i].y+32 ){
+						player.kill()
+					   }
+					break;
+			}
+		}
+		if(player.x + 32 > door.x && player.x < door.x+32 &&
+		   player.y + 48 > door.y && player.y < door.y+48 ){
+			level_num ++;
+			level = levels[level_num];
+			createLevel(level);
+		}
+				
+	}
+		
+	function moveObstacles(){
+		for(var i = 0;i < level_obs.length; i ++){
+			switch(level_obs[i].id){
+				case 2:
+					if(level_obs[i].direction == 1){
+						level_obs[i].y += 4;
+						if(level_obs[i].y == level_obs[i].finaly){
+							level_obs[i].direction = -1
+						}
+					}
+					else{
+						level_obs[i].y -= 2;
+						if(level_obs[i].y == level_obs[i].originaly){
+							level_obs[i].direction = 1
+						}
+					}
+			}
+		}
+	}
+	
+    function grn(min, max) {
 		return Math.round(Math.random() * (max - min)) + min;
     }
   

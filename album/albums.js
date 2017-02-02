@@ -8,7 +8,7 @@ albums = ["Silent Shout","Niggas on the moon ","Loveless ","Ok Computer ","Gover
 "Demons and Wizards","Benzaiten","The Iron Horse","Dreams","Sleeps Holy Mountain","Songs about Fucking","Untrue","ILLmatic","Land of Rape and Honey",
 "Blues for the Red Sun","Facelift","Come my Fanatics","Heartwork","Lifeforms","Advaitic Songs","Moving Pictures","Debut","Hi,How are you?","The low end theory",
 "Monoliths and Dimensions","In the City","Damaged","Banned in D.C.","Tweez","Skag Heaven","Dirt","Deathconsciousness","Bleach","Untitled","Daydream Nation",
-"Goo","Scum","Siamese Dream","Death,Pierce me","Dopesmoker","Vol.4","Odelagt","Litourgiya","2001","My Love is cool (Deluxe Edition)","Graduation","xx",
+"Goo","Scum","Siamese Dream","Death,Pierce me","Vol.4","Odelagt","Litourgiya","2001","My Love is cool (Deluxe Edition)","Graduation","xx",
 "No need to argue","The Stone Roses","Burn the Maps","Mellon collie and the infinite sadness","Beauty Behind the madness","Nevermind","The Lumineers",
 "In Silico","Electric Ladyland","Goo","Daydream Nation","Rumours","Live and Dangerous","Back in Black","Back Through Time",
 "Born in the USA, Died in apartment 48","LA Woman","MTV Unplugged","Jenny Death","Rum, Sodomy & the Lash","A Grand Don't Come for Free",
@@ -22,7 +22,7 @@ albums = ["Silent Shout","Niggas on the moon ","Loveless ","Ok Computer ","Gover
 "Hot Sugar","Yes","Yes","Jethro Tull ","Uriah Heep ","Osamu Kitajima","The sound defects ","Gabor Szabo","Sleep","Big Black","Burial","NAS","Ministry",
 "Kyuss","Alice in Chains","Electric Wizard","Carcass ","Future Sound of London","Om","Rush","Bjork","Daniel Johnston ","A Tribe Called Quest","Sunn O)))",
 "The Jam","Black Flag","Bad Brains","Slint","Squirrel Bait","Alice in Chains ","Have a Nice Life","Nirvana","Slint","Sonic Youth","Sonic Youth","Napalm Death",
-"Smashing Pumpkins","Silencer","Sleep","Black Sabbath","Trencadis","Batushka","Dr.Dre","Wolf Alice","Kanye West","The xx","The Cranberries ",
+"Smashing Pumpkins","Silencer","Black Sabbath","Trencadis","Batushka","Dr.Dre","Wolf Alice","Kanye West","The xx","The Cranberries ",
 "The Stone Roses","The Frames","Smashing Pumpkins","The Weeknd","Nirvana","The Lumineers","Pendulum","Jimi Hendrix","Sonic Youth","Sonic Youth","Fleetwood Mac",
 "Thin Lizzy","AC/DC","Alestorm","Bruce Springsteen","The Doors","Nirvana","Death Grips","The Pogues","The Streets","Alestorm","System of a Down","Green Day",
 "Fleetwood Mac","Oasis","Pink Floyd"]

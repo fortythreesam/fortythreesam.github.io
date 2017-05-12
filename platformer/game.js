@@ -28,6 +28,8 @@
 		player.max_speed= 5;
 		player.max_speedy= 8;
 		player.acceleration = 0.3;
+		player.jump = false;
+		player.jump_time = 0;
 		player.deadparts = [];
 		player.draw = function() {
 			//context.drawImage(player_image,player.x,player.y);
@@ -97,6 +99,10 @@
 						player.speedx = player.max_speed;
 					}
 				}
+				if (player.jump && player.jump_time < 8){
+				    player.speedy = -12;
+				    player.jump_time += 1;
+				}
 				if (player.on_ground){
 					player.speedy = 0;
 				}
@@ -135,6 +141,11 @@
 					}
 					for (var i = 0; i < level_obs.length;i ++){
 						switch(level_obs[i].id){
+							case 3:
+								context.fillStyle = "#883832";
+								context.globalAlpha = 1;
+								context.fillRect(level_obs[i].x,level_obs[i].y,32,32);
+								break;
 							case 2:
 								context.fillStyle = "#883832";
 								if (level_obs[i].direction == 1){
@@ -170,7 +181,9 @@
 						break;
 					case 32:
 						if(player.on_ground){
-							player.speedy = - 12;
+							player.jump = true;
+							player.speedy = -12;
+							player.jump_time = 0;
 							player.on_ground = false;
 						}
 						break;
@@ -195,6 +208,8 @@
 					case 16:
 						player.max_speed = 5;
 						break;
+					case 32:
+						player.jump = false;
 				}
 		}
 	}
@@ -204,6 +219,32 @@
 		for (var y = 0; y < level.length; y ++){
 			for (var x = 0; x < level[y].length; x ++){
 				switch(level[y][x]){
+					case 3:
+						var next_left = 0;
+						var next_right = 0;
+						while(true){
+							next_left += 1;
+							if(level[y][x-next_left] == 1){
+								break;
+							}
+						}
+						while(true){
+							next_right += 1;
+							if(level[y][x+next_left] == 1){
+								break;
+							}
+						}
+						sliding_block = {
+							id:3,
+							startx:(x-next_left+1)*32,
+							finalx:(x+next_right+1)*32,
+							x:x * 32,
+							y:y * 32,
+							direction:1,
+						}
+						level_obs.push(sliding_block);
+						level[y][x] = 0;
+						break;
 					case 2:
 						var next_block = 0
 						while(true){
@@ -277,6 +318,7 @@
 			if(level[Math.floor((player.y - 1 + player.speedy)/32)][Math.floor(player.x/32)] == 1 ||
 			   level[Math.floor((player.y - 1 + player.speedy)/32)][Math.floor((player.x+31)/32)] == 1){
 				player.y = Math.floor((player.y-1)/32)*32;
+				player.jump = false;
 				player.speedy = 0;
 			}
 		}
@@ -285,6 +327,12 @@
 	function obstacleCollision(){
 		for(var i = 0;i < level_obs.length; i++){
 			switch(level_obs[i].id){
+				case 3:
+					if(player.x + 32 > level_obs[i].x && player.x < level_obs[i].x+32 &&
+					   player.y + 48 > level_obs[i].y && player.y < level_obs[i].y+32 ){
+						player.kill()
+					   }
+					break;
 				case 2:
 					if(player.x + 32 > level_obs[i].x && player.x < level_obs[i].x+32 &&
 					   player.y + 48 > level_obs[i].y && player.y < level_obs[i].y+32 ){
@@ -305,6 +353,20 @@
 	function moveObstacles(){
 		for(var i = 0;i < level_obs.length; i ++){
 			switch(level_obs[i].id){
+				case 3:
+					if(level_obs[i].direction == 1){
+						level_obs[i].x += 4;
+						if(level_obs[i].x == level_obs[i].finalx){
+							level_obs[i].direction = -1
+						}
+					}
+					else{
+						level_obs[i].x -= 4;
+						if(level_obs[i].x == level_obs[i].startx){
+							level_obs[i].direction = 1
+						}
+					}
+					break;
 				case 2:
 					if(level_obs[i].direction == 1){
 						level_obs[i].y += 4;
@@ -318,6 +380,7 @@
 							level_obs[i].direction = 1
 						}
 					}
+					break;
 			}
 		}
 	}
@@ -327,4 +390,4 @@
     }
   
 
-})(); 
+})();

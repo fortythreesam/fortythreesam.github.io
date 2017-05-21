@@ -173,13 +173,27 @@
 					case 65:
 						player.left = -1;
 						break;
+					case 37:
+						player.left = -1;
+						break;
 					case 68:
+						player.right = 1;
+						break;
+					case 39:
 						player.right = 1;
 						break;
 					case 16:
 						player.max_speed= 7;
 						break;
 					case 32:
+						if(player.on_ground){
+							player.jump = true;
+							player.speedy = -12;
+							player.jump_time = 0;
+							player.on_ground = false;
+						}
+						break;
+					case 38:
 						if(player.on_ground){
 							player.jump = true;
 							player.speedy = -12;
@@ -202,13 +216,21 @@
 					case 65:
 						player.left = 0;
 						break;
+					case 37:
+						player.left = 0;
+						break;
 					case 68:
+						player.right = 0;
+						break;
+					case 39:
 						player.right = 0;
 						break;
 					case 16:
 						player.max_speed = 5;
 						break;
 					case 32:
+						player.jump = false;
+					case 38:
 						player.jump = false;
 				}
 		}

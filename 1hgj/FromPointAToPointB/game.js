@@ -66,7 +66,7 @@
 			}
 		}
 		if (player.x + 32 > door.x && player.x < door.x+32 &&
-			   player.y + 32 > door.y && player.y < door.x + 32){
+			   player.y + 32 > door.y && player.y < door.y + 32){
 			       newLevel();
 	    }
 		

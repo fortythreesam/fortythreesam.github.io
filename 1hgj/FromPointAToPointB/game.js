@@ -18,6 +18,14 @@
 		
 		context.font="30px Verdana"
 		context.textAlign = "center"
+		newGame();
+		
+		game = window.setInterval(update,16);
+		window.addEventListener("keydown",controls);
+		window.addEventListener("keyup",controlsEnd);
+    }
+	
+	function newGame(){
 		timer = 60;
 		level = 0;
 		
@@ -34,11 +42,7 @@
 		door.y = height/2 - 16
 		
 		newLevel();
-		
-		window.setInterval(update,16);
-		window.addEventListener("keydown",controls);
-		window.addEventListener("keyup",controlsEnd);
-    }
+	}
 	
 	function update(){
 		player.x += player.speed * (player.left + player.right);
@@ -83,8 +87,9 @@
 		    context.fillText("WASD TO MOVE",width/2,height/2 - 30)
 		    context.fillText("SHIFT TO SPRINT",width/2,height/2 + 30)
 		}
-		context.fillRect(player.x,player.y,32,32);
 		context.fillRect(door.x,door.y,32,32);
+		context.fillStyle = "#898178"
+		context.fillRect(player.x,player.y,32,32);
 		for(var i = 0; i < enemies.length; i ++){
 		    context.fillStyle = "#883832"
 			context.fillRect(enemies[i].x,enemies[i].y,32,32)
@@ -139,6 +144,10 @@
 				case 16:
 				    player.speed = 8;
 					break;
+				case 82:
+				    newGame()
+					break;
+				    
 		}
 	}
 	

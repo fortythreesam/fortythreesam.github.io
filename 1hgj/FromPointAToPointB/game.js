@@ -31,7 +31,7 @@
 		player.alive=true;
 		
 		door.x = width - 16
-		door.y = height/2 + 16
+		door.y = height/2 - 16
 		
 		newLevel();
 		

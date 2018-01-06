@@ -6,7 +6,7 @@ function setup(){
   background(126,192,238);
   noStroke();
   cloud(400,200,200,75,[242,248,253],getRandomNumber(-0.8,0.8),0.5);
-  grass(-20,750,820,50,[ 93, 191, 54 ],90);
+  grass(-20,750,820,50,[ 44, 176, 55 ],30);
 }
 
 function draw(){
@@ -74,10 +74,10 @@ function cloud(centerX, centerY, radiusX, radiusY, colours, offsetX, offsetY){
 
 function grass(posX, posY, grass_width, grass_height, colours, angle){
     fill(colours[0],colours[1],colours[2],255);
-    grass_particles = (grass_width * grass_height)/4;
+    grass_particles = (grass_width * grass_height)/2;
     rect(posX,posY+12,grass_width,grass_height);
     for(var i = 0; i < grass_particles; i++){
-        fill(colours[0]+getRandomNumber(-5,5),colours[1]+getRandomNumber(-7,7),colours[2]+getRandomNumber(-5,5),255);
+        fill(colours[0]+getRandomNumber(-2,2),colours[1]+getRandomNumber(-3,3),colours[2]+getRandomNumber(-2,2),255);
         grass_quad = generateGrassQuad(Math.floor(getRandomNumber(posX,posX+grass_width)),Math.floor(getRandomNumber(posY,posY+grass_height)),angle);
         quad(grass_quad.x1,grass_quad.y1,grass_quad.x2,grass_quad.y2,grass_quad.x3,grass_quad.y3,grass_quad.x4,grass_quad.y4);
     }
@@ -86,13 +86,13 @@ function grass(posX, posY, grass_width, grass_height, colours, angle){
 
 function generateGrassQuad(x,y,angle){
     modifier = Math.floor(angle/4);
-    height_modifier = getRandomNumber(-2,24);
+    height_modifier = getRandomNumber(-2,15);
     new_quad = {
 	x1:x+modifier,
 	y1:y+4-height_modifier,
-	x2:x + 2 + modifier,
+	x2:x + 1 + modifier,
 	y2:y - 2 - height_modifier,
-	x3:x+2,
+	x3:x+1,
 	y3:y + 12,
 	x4:x,
 	y4:y + 12,
